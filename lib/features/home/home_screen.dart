@@ -69,64 +69,55 @@ class HomeScreen extends ConsumerWidget {
                 _StreakBanner(
                   streak: streak.currentStreak,
                   freezes: streak.freezeCount,
+                  workoutDoneToday: done,
                 ),
                 const SizedBox(height: 28),
-                Text(
-                  done ? 'Workout complete' : "Today's workout",
-                  style: theme.textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  done
-                      ? 'Nice work. See you tomorrow.'
-                      : 'Just a few moves. Keep it easy.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.muted,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                if (workout == null)
-                  const Text('No workout yet.')
+                if (done)
+                  _DoneForToday(streak: streak.currentStreak)
                 else ...[
-                  for (var i = 0; i < workout.exercises.length; i++)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _ExerciseRow(
-                        item: workout.exercises[i],
-                        enabled: !done,
-                        onComplete: (completed) {
-                          ref
-                              .read(todaysWorkoutProvider.notifier)
-                              .markExercise(index: i, completed: completed);
-                        },
-                      ),
+                  Text(
+                    "Today's workout",
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Just a few moves. Keep it easy.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.muted,
                     ),
-                  const SizedBox(height: 16),
-                  if (!done)
-                    FilledButton(
-                      onPressed: workout.allMarked
-                          ? () => ref
-                              .read(todaysWorkoutProvider.notifier)
-                              .finishWorkout()
-                          : null,
-                      child: const Text('Complete workout'),
-                    )
-                  else
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppColors.mist,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        'Streak: ${streak.currentStreak} day${streak.currentStreak == 1 ? '' : 's'}',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: AppColors.forestDark,
+                  ),
+                  const SizedBox(height: 20),
+                  if (workout == null)
+                    const Text('No workout yet.')
+                  else ...[
+                    for (var i = 0; i < workout.exercises.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _ExerciseRow(
+                          item: workout.exercises[i],
+                          enabled: true,
+                          onComplete: (completed) {
+                            ref
+                                .read(todaysWorkoutProvider.notifier)
+                                .markExercise(index: i, completed: completed);
+                          },
                         ),
                       ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: workout.allMarked
+                          ? () async {
+                              await ref
+                                  .read(todaysWorkoutProvider.notifier)
+                                  .finishWorkout();
+                              if (context.mounted) {
+                                _showCompletionDialog(context, ref);
+                              }
+                            }
+                          : null,
+                      child: const Text('Complete workout'),
                     ),
+                  ],
                 ],
               ],
             );
@@ -135,13 +126,150 @@ class HomeScreen extends ConsumerWidget {
       ),
     );
   }
+
+  void _showCompletionDialog(BuildContext context, WidgetRef ref) {
+    final streak = ref.read(streakProvider);
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '✅',
+                style: TextStyle(fontSize: 64),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Workout completed!',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.forestDark,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Great job! You\'re on a ${streak.currentStreak} day streak 🔥',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: AppColors.muted,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'See you tomorrow!',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: AppColors.forest,
+                      fontWeight: FontWeight.w600,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Done'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DoneForToday extends StatelessWidget {
+  const _DoneForToday({required this.streak});
+
+  final int streak;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFE8F2EC), Color(0xFFF3F0E8)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.85),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.check_rounded,
+              size: 48,
+              color: AppColors.forest,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            "You're done for today",
+            style: theme.textTheme.headlineSmall?.copyWith(
+              color: AppColors.forestDark,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Nice work!!',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.muted,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Rest up — a new workout waits tomorrow.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.muted,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        
+        ],
+      ),
+    );
+  }
 }
 
 class _StreakBanner extends StatelessWidget {
-  const _StreakBanner({required this.streak, required this.freezes});
+  const _StreakBanner({
+    required this.streak,
+    required this.freezes,
+    required this.workoutDoneToday,
+  });
 
   final int streak;
   final int freezes;
+  final bool workoutDoneToday;
+
+  String get _subtitle {
+    if (freezes > 0) {
+      return '$freezes streak freeze${freezes == 1 ? '' : 's'} ready';
+    }
+    if (workoutDoneToday) {
+      return 'Show up tomorrow to keep it alive';
+    }
+    return 'Show up today to keep it alive';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -172,9 +300,7 @@ class _StreakBanner extends StatelessWidget {
                       ),
                 ),
                 Text(
-                  freezes > 0
-                      ? '$freezes streak freeze${freezes == 1 ? '' : 's'} ready'
-                      : 'Show up today to keep it alive',
+                  _subtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.muted,
                       ),

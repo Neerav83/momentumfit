@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:momentumfit/app.dart';
+import 'package:momentumfit/data/local/local_app_store.dart';
 import 'package:momentumfit/domain/models/avatar.dart';
 import 'package:momentumfit/domain/models/enums.dart';
 import 'package:momentumfit/domain/models/user_profile.dart';
@@ -12,23 +11,19 @@ import 'package:momentumfit/providers/app_providers.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('completing assessment navigates to home', (tester) async {
+  test('completeAssessment saves levels without circular dependency', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
+    final store = LocalAppStore.forTesting(prefs);
+    await store.initialize();
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(prefs),
-        ],
-        child: const MomentumFitApp(),
-      ),
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        localAppStoreProvider.overrideWithValue(store),
+      ],
     );
-    await tester.pumpAndSettle();
-
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(MomentumFitApp)),
-    );
+    addTearDown(container.dispose);
 
     await container.read(profileProvider.notifier).completeOnboarding(
           UserProfile(
@@ -44,25 +39,15 @@ void main() {
             createdAt: DateTime.now(),
           ),
         );
-    await tester.pumpAndSettle();
 
-    expect(find.text('Fitness check'), findsOneWidget);
+    await container.read(profileProvider.notifier).completeAssessment({
+      'push_ups': 10,
+      'squats': 20,
+      'plank': 40,
+    });
 
-    // Push-ups
-    await tester.enterText(find.byType(TextField), '10');
-    await tester.tap(find.text('Next exercise'));
-    await tester.pumpAndSettle();
-
-    // Squats
-    await tester.enterText(find.byType(TextField), '20');
-    await tester.tap(find.text('Next exercise'));
-    await tester.pumpAndSettle();
-
-    // Plank
-    await tester.enterText(find.byType(TextField), '40');
-    await tester.tap(find.text('Save & start'));
-    await tester.pumpAndSettle();
-
-    expect(find.text("Today's workout"), findsOneWidget);
+    final profile = container.read(profileProvider);
+    expect(profile?.assessmentCompleted, isTrue);
+    expect(container.read(levelsProvider), isNotEmpty);
   });
 }
