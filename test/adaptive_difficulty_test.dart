@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:momentumfit/domain/models/enums.dart';
 import 'package:momentumfit/domain/models/exercise_level.dart';
+import 'package:momentumfit/domain/models/user_profile.dart';
 import 'package:momentumfit/domain/services/adaptive_difficulty.dart';
 
 void main() {
@@ -69,6 +70,34 @@ void main() {
         unit: ExerciseUnit.reps,
       );
       expect(level.currentTarget, 8);
+    });
+
+    test('seedLevels accepts very low assessment scores', () {
+      final profile = UserProfile(
+        name: 'Test',
+        avatarId: 'fox',
+        age: 30,
+        heightCm: 165,
+        weightKg: 60,
+        activityLevel: ActivityLevel.beginner,
+        injuries: {Injury.none},
+        onboardingCompleted: true,
+        assessmentCompleted: false,
+      );
+
+      final levels = AdaptiveDifficulty.seedLevels(
+        profile: profile,
+        assessmentResults: {
+          'push_ups': 2,
+          'squats': 3,
+          'plank': 5,
+        },
+      );
+
+      expect(levels, isNotEmpty);
+      expect(levels['push_ups']!.currentTarget, greaterThanOrEqualTo(1));
+      expect(levels['plank']!.currentTarget, greaterThanOrEqualTo(1));
+      expect(levels['dead_bug']!.currentTarget, greaterThanOrEqualTo(1));
     });
   });
 }

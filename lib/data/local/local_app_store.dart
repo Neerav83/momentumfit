@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/models/exercise_level.dart';
+import '../../domain/models/reminder_settings.dart';
 import '../../domain/models/user_profile.dart';
 import '../../domain/models/workout.dart';
 import 'app_database.dart';
@@ -17,6 +18,7 @@ class LocalStorageKeys {
   static const coachDate = 'mf_coach_date';
   static const coachText = 'mf_coach_text';
   static const coachDoneKey = 'mf_coach_done_key';
+  static const reminder = 'mf_reminder';
 }
 
 class LocalAppStore {
@@ -202,6 +204,25 @@ class LocalAppStore {
     await _prefs.remove(LocalStorageKeys.coachText);
   }
 
+  ReminderSettings readReminderSettings() {
+    final raw = _prefs.getString(LocalStorageKeys.reminder);
+    if (raw == null) return ReminderSettings.defaults;
+    try {
+      return ReminderSettings.fromJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+      );
+    } catch (_) {
+      return ReminderSettings.defaults;
+    }
+  }
+
+  Future<void> writeReminderSettings(ReminderSettings settings) async {
+    await _prefs.setString(
+      LocalStorageKeys.reminder,
+      jsonEncode(settings.toJson()),
+    );
+  }
+
   Future<void> clearAll() async {
     _profile = null;
     _levels = null;
@@ -209,6 +230,7 @@ class LocalAppStore {
     _streak = null;
     _assessment = null;
     await clearCoachNudge();
+    await _prefs.remove(LocalStorageKeys.reminder);
     if (_useDatabase) await _db.clearAll();
   }
 }

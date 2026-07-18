@@ -14,9 +14,13 @@ abstract final class AdaptiveDifficulty {
     required int assessmentResult,
     required ActivityLevel activityLevel,
   }) {
-    final raw = (assessmentResult * activityLevel.startMultiplier).round();
-    final min = exercise.unit == ExerciseUnit.seconds ? 10 : 3;
-    return raw.clamp(min, assessmentResult).toInt();
+    final safeResult = assessmentResult < 0 ? 0 : assessmentResult;
+    final raw = (safeResult * activityLevel.startMultiplier).round();
+    final min = exercise.unit == ExerciseUnit.seconds ? 8 : 2;
+    // clamp() throws if lower > upper — common when assessment is very low.
+    final max = safeResult < min ? min : safeResult;
+    final target = raw.clamp(min, max).toInt();
+    return target < 1 ? 1 : target;
   }
 
   /// Seed related exercises from assessment baselines.
@@ -30,19 +34,19 @@ abstract final class AdaptiveDifficulty {
 
     final seeds = <String, int>{
       'push_ups': push,
-      'knee_push_ups': (push * 1.4).round(),
-      'chair_dips': (push * 0.8).round().clamp(4, 999),
+      'knee_push_ups': _atLeast(1, (push * 1.4).round()),
+      'chair_dips': _atLeast(1, (push * 0.8).round()),
       'squats': squat,
-      'lunges': (squat * 0.7).round().clamp(6, 999),
-      'glute_bridge': (squat * 0.9).round().clamp(8, 999),
-      'calf_raises': (squat * 1.1).round().clamp(10, 999),
+      'lunges': _atLeast(1, (squat * 0.7).round()),
+      'glute_bridge': _atLeast(1, (squat * 0.9).round()),
+      'calf_raises': _atLeast(1, (squat * 1.1).round()),
       'plank': plank,
-      'side_plank': (plank * 0.6).round().clamp(8, 999),
-      'dead_bug': (plank / 3).round().clamp(6, 999),
-      'bird_dog': (plank / 3).round().clamp(6, 999),
-      'jumping_jacks': (squat * 1.2).round().clamp(12, 999),
-      'high_knees': (squat * 1.0).round().clamp(12, 999),
-      'mountain_climbers': (squat * 0.9).round().clamp(10, 999),
+      'side_plank': _atLeast(1, (plank * 0.6).round()),
+      'dead_bug': _atLeast(1, (plank / 3).round()),
+      'bird_dog': _atLeast(1, (plank / 3).round()),
+      'jumping_jacks': _atLeast(1, (squat * 1.2).round()),
+      'high_knees': _atLeast(1, (squat * 1.0).round()),
+      'mountain_climbers': _atLeast(1, (squat * 0.9).round()),
     };
 
     final levels = <String, ExerciseLevel>{};
@@ -70,6 +74,8 @@ abstract final class AdaptiveDifficulty {
     }
     return levels;
   }
+
+  static int _atLeast(int min, int value) => value < min ? min : value;
 
   static ExerciseLevel adapt({
     required ExerciseLevel level,

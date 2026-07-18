@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../domain/models/avatar.dart';
 import '../../providers/app_providers.dart';
+import '../../providers/reminder_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -13,6 +14,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final profile = ref.watch(profileProvider);
+    final reminder = ref.watch(reminderSettingsProvider);
 
     if (profile == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -51,6 +53,83 @@ class SettingsScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text('Reminders', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.only(right: 8),
+                    title: Text(
+                      'Daily reminder',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    subtitle: Text(
+                      reminder.enabled
+                          ? 'Local notification at ${reminder.formattedTime}'
+                          : 'Get a nudge so you don’t miss a day',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.muted,
+                      ),
+                    ),
+                    value: reminder.enabled,
+                    activeThumbColor: AppColors.forest,
+                    onChanged: (value) async {
+                      final error = await ref
+                          .read(reminderSettingsProvider.notifier)
+                          .setEnabled(value);
+                      if (error != null && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(error)),
+                        );
+                      }
+                    },
+                  ),
+                  if (reminder.enabled) ...[
+                    const Divider(height: 1),
+                    ListTile(
+                      contentPadding: const EdgeInsets.only(right: 8),
+                      title: Text(
+                        'Reminder time',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      subtitle: Text(
+                        reminder.formattedTime,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColors.muted,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.schedule,
+                        color: AppColors.forest,
+                      ),
+                      onTap: () async {
+                        final picked = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay(
+                            hour: reminder.hour,
+                            minute: reminder.minute,
+                          ),
+                        );
+                        if (picked == null) return;
+                        await ref
+                            .read(reminderSettingsProvider.notifier)
+                            .setTime(
+                              hour: picked.hour,
+                              minute: picked.minute,
+                            );
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),

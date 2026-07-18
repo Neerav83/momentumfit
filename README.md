@@ -30,7 +30,8 @@ Målet är att bygga en **daglig vana**. Varje pass ska kännas görbart. Appen 
 | **Streak** | Håll vanan vid liv. Streak freezes tjänas in över tid |
 | **Progress** | Levels, personliga rekord och enkel historik |
 | **AI Coach** | Kort daglig nudge via Groq (fallback utan API-nyckel) |
-| **Settings** | Gör om assessment, nollställ data |
+| **Reminders** | Lokala dagliga påminnelser (ställbar tid i Settings) |
+| **Settings** | Notiser, retake assessment, nollställ data |
 
 ### Adaptionsregler
 
@@ -50,6 +51,7 @@ Inga stora hopp. Aldrig straff. Konsistens > intensitet.
 - **SQLite** + SharedPreferences — lokal persistens
 - **google_fonts** — Fraunces + DM Sans
 - **Groq** — valfri AI-coach (free tier)
+- **flutter_local_notifications** — lokala påminnelser (ingen Apple Push)
 
 ---
 
