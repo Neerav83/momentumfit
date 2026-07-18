@@ -116,13 +116,14 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      _current.cue,
-                      style: theme.textTheme.titleMedium?.copyWith(
+                      _current.howTo,
+                      style: theme.textTheme.bodyMedium?.copyWith(
                         color: AppColors.muted,
+                        height: 1.45,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 36),
+                    const SizedBox(height: 28),
                     SizedBox(
                       width: 160,
                       child: TextField(
@@ -131,7 +132,8 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
                         textAlign: TextAlign.center,
                         style: theme.textTheme.headlineMedium,
                         decoration: InputDecoration(
-                          hintText: _current.unit.name == 'seconds' ? 'sec' : 'reps',
+                          hintText:
+                              _current.unit.name == 'seconds' ? 'sec' : 'reps',
                         ),
                         onSubmitted: (_) => _submitCurrent(),
                       ),

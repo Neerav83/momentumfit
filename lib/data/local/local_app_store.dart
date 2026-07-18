@@ -14,6 +14,9 @@ class LocalStorageKeys {
   static const streak = 'mf_streak';
   static const assessment = 'mf_assessment';
   static const migrated = 'mf_migrated_to_sqlite';
+  static const coachDate = 'mf_coach_date';
+  static const coachText = 'mf_coach_text';
+  static const coachDoneKey = 'mf_coach_done_key';
 }
 
 class LocalAppStore {
@@ -175,12 +178,37 @@ class LocalAppStore {
     if (_useDatabase) await _db.saveAssessment(results);
   }
 
+  /// Cached coach nudge: one text per calendar day + workout-done state.
+  String? readCoachNudge({required String dateKey, required bool workoutDone}) {
+    final cachedDate = _prefs.getString(LocalStorageKeys.coachDate);
+    final cachedDone = _prefs.getBool(LocalStorageKeys.coachDoneKey) ?? false;
+    if (cachedDate != dateKey || cachedDone != workoutDone) return null;
+    return _prefs.getString(LocalStorageKeys.coachText);
+  }
+
+  Future<void> writeCoachNudge({
+    required String dateKey,
+    required bool workoutDone,
+    required String text,
+  }) async {
+    await _prefs.setString(LocalStorageKeys.coachDate, dateKey);
+    await _prefs.setBool(LocalStorageKeys.coachDoneKey, workoutDone);
+    await _prefs.setString(LocalStorageKeys.coachText, text);
+  }
+
+  Future<void> clearCoachNudge() async {
+    await _prefs.remove(LocalStorageKeys.coachDate);
+    await _prefs.remove(LocalStorageKeys.coachDoneKey);
+    await _prefs.remove(LocalStorageKeys.coachText);
+  }
+
   Future<void> clearAll() async {
     _profile = null;
     _levels = null;
     _workouts = null;
     _streak = null;
     _assessment = null;
+    await clearCoachNudge();
     if (_useDatabase) await _db.clearAll();
   }
 }

@@ -7,6 +7,7 @@ class ExerciseDefinition {
     required this.category,
     required this.unit,
     required this.cue,
+    required this.howTo,
     this.contraindications = const {},
     this.assessmentExercise = false,
   });
@@ -15,7 +16,12 @@ class ExerciseDefinition {
   final String name;
   final ExerciseCategory category;
   final ExerciseUnit unit;
+
+  /// Short tip shown in lists.
   final String cue;
+
+  /// Clear step-by-step explanation.
+  final String howTo;
   final Set<Injury> contraindications;
   final bool assessmentExercise;
 }
@@ -27,7 +33,9 @@ abstract final class ExerciseLibrary {
     name: 'Push-ups',
     category: ExerciseCategory.upperBody,
     unit: ExerciseUnit.reps,
-    cue: 'Do as many as you can with good form.',
+    cue: 'Chest to the floor with control.',
+    howTo:
+        'Start in a high plank with hands under your shoulders. Lower your chest toward the floor, keeping elbows close to your body, then press back up. Keep your body in a straight line from head to heels.',
     contraindications: {Injury.shoulders},
     assessmentExercise: true,
   );
@@ -37,7 +45,9 @@ abstract final class ExerciseLibrary {
     name: 'Knee push-ups',
     category: ExerciseCategory.upperBody,
     unit: ExerciseUnit.reps,
-    cue: 'Keep your core tight and lower with control.',
+    cue: 'Same as push-ups, from the knees.',
+    howTo:
+        'Kneel on the floor and place your hands under your shoulders. Keep a straight line from knees to head. Lower your chest toward the floor, then press back up with control.',
   );
 
   static const chairDips = ExerciseDefinition(
@@ -45,7 +55,9 @@ abstract final class ExerciseLibrary {
     name: 'Chair dips',
     category: ExerciseCategory.upperBody,
     unit: ExerciseUnit.reps,
-    cue: 'Lower until elbows are around 90 degrees.',
+    cue: 'Lower until elbows are near 90°.',
+    howTo:
+        'Sit on the edge of a sturdy chair, hands beside your hips. Slide forward so your hips clear the seat. Bend your elbows to lower your body, then press up. Keep shoulders down and away from your ears.',
     contraindications: {Injury.shoulders},
   );
 
@@ -54,7 +66,9 @@ abstract final class ExerciseLibrary {
     name: 'Squats',
     category: ExerciseCategory.legs,
     unit: ExerciseUnit.reps,
-    cue: 'Do as many as you can.',
+    cue: 'Sit back, chest up, heels down.',
+    howTo:
+        'Stand with feet about shoulder-width apart. Sit your hips back as if into a chair, keep your chest lifted, and lower until thighs are roughly parallel to the floor (or as deep as comfortable). Drive through your heels to stand.',
     contraindications: {Injury.knees},
     assessmentExercise: true,
   );
@@ -64,7 +78,9 @@ abstract final class ExerciseLibrary {
     name: 'Lunges',
     category: ExerciseCategory.legs,
     unit: ExerciseUnit.reps,
-    cue: 'Alternate legs. Count total reps.',
+    cue: 'Alternate legs. Count every step.',
+    howTo:
+        'Step one foot forward and bend both knees until the back knee nearly touches the floor. Keep your front knee above your ankle. Push back to standing and switch legs. Count total reps across both sides.',
     contraindications: {Injury.knees},
   );
 
@@ -73,7 +89,9 @@ abstract final class ExerciseLibrary {
     name: 'Glute bridge',
     category: ExerciseCategory.legs,
     unit: ExerciseUnit.reps,
-    cue: 'Squeeze at the top, then lower slowly.',
+    cue: 'Squeeze at the top, then lower.',
+    howTo:
+        'Lie on your back with knees bent and feet flat on the floor. Press through your heels to lift your hips until your body forms a straight line from shoulders to knees. Squeeze your glutes at the top, then lower slowly.',
     contraindications: {Injury.back},
   );
 
@@ -82,7 +100,9 @@ abstract final class ExerciseLibrary {
     name: 'Calf raises',
     category: ExerciseCategory.legs,
     unit: ExerciseUnit.reps,
-    cue: 'Rise onto your toes, pause, then lower.',
+    cue: 'Rise onto your toes, pause, lower.',
+    howTo:
+        'Stand tall with feet hip-width apart. Rise onto the balls of your feet as high as you can, pause briefly, then lower with control. Hold a wall or chair for balance if needed.',
   );
 
   static const plank = ExerciseDefinition(
@@ -90,7 +110,9 @@ abstract final class ExerciseLibrary {
     name: 'Plank',
     category: ExerciseCategory.core,
     unit: ExerciseUnit.seconds,
-    cue: 'Hold as long as possible.',
+    cue: 'Hold a straight line — no sagging.',
+    howTo:
+        'Place forearms on the floor with elbows under shoulders, or hold a high plank on your hands. Keep your body straight from head to heels. Brace your core, squeeze your glutes, and breathe steadily. Stop if your form breaks.',
     assessmentExercise: true,
   );
 
@@ -99,7 +121,9 @@ abstract final class ExerciseLibrary {
     name: 'Side plank',
     category: ExerciseCategory.core,
     unit: ExerciseUnit.seconds,
-    cue: 'Hold each side. Log the weaker side.',
+    cue: 'Log the weaker side’s time.',
+    howTo:
+        'Lie on one side with your elbow under your shoulder. Lift your hips so your body forms a straight line. Hold, then switch sides. Log the time of your weaker side.',
     contraindications: {Injury.shoulders},
   );
 
@@ -108,7 +132,9 @@ abstract final class ExerciseLibrary {
     name: 'Dead bug',
     category: ExerciseCategory.core,
     unit: ExerciseUnit.reps,
-    cue: 'Move slowly and keep your lower back pressed down.',
+    cue: 'Slow moves, back pressed down.',
+    howTo:
+        'Lie on your back with arms toward the ceiling and knees bent at 90°. Slowly extend opposite arm and leg toward the floor without letting your lower back arch. Return and switch sides. One rep = both sides once.',
     contraindications: {Injury.back},
   );
 
@@ -117,7 +143,9 @@ abstract final class ExerciseLibrary {
     name: 'Bird dog',
     category: ExerciseCategory.core,
     unit: ExerciseUnit.reps,
-    cue: 'Extend opposite arm and leg, then switch.',
+    cue: 'Opposite arm and leg, then switch.',
+    howTo:
+        'Start on all fours with hands under shoulders and knees under hips. Extend one arm forward and the opposite leg back, keeping hips level. Pause, return, then switch. One rep = both sides once.',
     contraindications: {Injury.back},
   );
 
@@ -126,7 +154,9 @@ abstract final class ExerciseLibrary {
     name: 'Jumping jacks',
     category: ExerciseCategory.cardio,
     unit: ExerciseUnit.reps,
-    cue: 'Keep a steady rhythm.',
+    cue: 'Steady rhythm, soft landings.',
+    howTo:
+        'Stand with feet together and arms at your sides. Jump your feet out while raising your arms overhead, then jump back to the start. Land softly and keep a steady pace.',
     contraindications: {Injury.knees},
   );
 
@@ -135,7 +165,9 @@ abstract final class ExerciseLibrary {
     name: 'High knees',
     category: ExerciseCategory.cardio,
     unit: ExerciseUnit.reps,
-    cue: 'Drive knees up and stay light on your feet.',
+    cue: 'Drive knees up, stay light.',
+    howTo:
+        'Jog in place while driving your knees up toward hip height. Pump your arms and stay on the balls of your feet. Count each knee drive as one rep.',
     contraindications: {Injury.knees},
   );
 
@@ -144,7 +176,9 @@ abstract final class ExerciseLibrary {
     name: 'Mountain climbers',
     category: ExerciseCategory.cardio,
     unit: ExerciseUnit.reps,
-    cue: 'Keep hips level as you alternate legs.',
+    cue: 'Hips level as you switch legs.',
+    howTo:
+        'Start in a high plank. Drive one knee toward your chest, then quickly switch legs as if running in place. Keep hips low and level. Count each knee drive as one rep.',
     contraindications: {Injury.shoulders, Injury.back},
   );
 

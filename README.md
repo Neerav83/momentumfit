@@ -29,6 +29,7 @@ Målet är att bygga en **daglig vana**. Varje pass ska kännas görbart. Appen 
 | **Adaptiv svårighet** | Levels per övning som sakta går upp eller ner |
 | **Streak** | Håll vanan vid liv. Streak freezes tjänas in över tid |
 | **Progress** | Levels, personliga rekord och enkel historik |
+| **AI Coach** | Kort daglig nudge via Groq (fallback utan API-nyckel) |
 | **Settings** | Gör om assessment, nollställ data |
 
 ### Adaptionsregler
@@ -46,8 +47,9 @@ Inga stora hopp. Aldrig straff. Konsistens > intensitet.
 - **Flutter** (iOS, Android, m.fl.)
 - **Riverpod** — state management
 - **go_router** — navigation med redirects för onboarding/assessment
-- **SharedPreferences** — lokal persistens (ingen backend ännu)
+- **SQLite** + SharedPreferences — lokal persistens
 - **google_fonts** — Fraunces + DM Sans
+- **Groq** — valfri AI-coach (free tier)
 
 ---
 
@@ -57,6 +59,37 @@ Inga stora hopp. Aldrig straff. Konsistens > intensitet.
 flutter pub get
 flutter run
 ```
+
+### AI Coach (Groq)
+
+1. Skapa API-nyckel på [console.groq.com](https://console.groq.com/)
+2. Kopiera exempel-filen och fyll i nyckeln:
+
+```bash
+cp local_defines.example.json local_defines.json
+```
+
+Öppna `local_defines.json` och klistra in din nyckel (filen är gitignorerad).
+
+3. Kör med filen:
+
+```bash
+flutter run --dart-define-from-file=local_defines.json
+```
+
+Release:
+
+```bash
+flutter run --release --dart-define-from-file=local_defines.json
+```
+
+Alternativt utan fil:
+
+```bash
+flutter run --dart-define=GROQ_API_KEY=din_nyckel_här
+```
+
+Utan nyckel visar appen lugna offline-texter istället. Coach-texten cachas en gång per dag.
 
 Kör tester:
 
@@ -108,7 +141,8 @@ Motto: *Become a little stronger every day.*
 - Watch-stöd
 - Vänner & månadsutmaningar
 - Achievements & tränings­historik
-- AI Coach, recovery, sömn/puls
+- Recovery, sömn/puls
+- Proxy för Groq-nyckel inför store-release
 
 ---
 

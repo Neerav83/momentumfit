@@ -6,6 +6,7 @@ import '../../domain/models/enums.dart';
 import '../../domain/models/exercise.dart';
 import '../../domain/models/workout.dart';
 import '../../providers/app_providers.dart';
+import '../../providers/coach_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -71,6 +72,8 @@ class HomeScreen extends ConsumerWidget {
                   freezes: streak.freezeCount,
                   workoutDoneToday: done,
                 ),
+                const SizedBox(height: 16),
+                const _CoachNudgeCard(),
                 const SizedBox(height: 28),
                 if (done)
                   _DoneForToday(streak: streak.currentStreak)
@@ -110,6 +113,7 @@ class HomeScreen extends ConsumerWidget {
                               await ref
                                   .read(todaysWorkoutProvider.notifier)
                                   .finishWorkout();
+                              ref.invalidate(coachNudgeProvider);
                               if (context.mounted) {
                                 _showCompletionDialog(context, ref);
                               }
@@ -180,6 +184,66 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _CoachNudgeCard extends ConsumerWidget {
+  const _CoachNudgeCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final nudge = ref.watch(coachNudgeProvider);
+    final theme = Theme.of(context);
+
+    return nudge.when(
+      loading: () => const SizedBox.shrink(),
+      error: (error, stackTrace) => const SizedBox.shrink(),
+      data: (text) {
+        if (text.isEmpty) return const SizedBox.shrink();
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.mist),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.auto_awesome,
+                color: AppColors.forest,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Coach',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: AppColors.forestDark,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      text,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: AppColors.muted,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -352,14 +416,25 @@ class _ExerciseRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(def.name, style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 2),
                     Text(
                       item.done && item.completed != null
                           ? 'Did ${def.unit.format(item.completed!)} · target ${def.unit.format(item.target)}'
-                          : 'Target ${def.unit.format(item.target)}',
+                          : def.cue,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.muted,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                    if (!item.done)
+                      Text(
+                        'Target ${def.unit.format(item.target)}',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: AppColors.forest,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -435,53 +510,64 @@ class _LogExerciseSheetState extends State<_LogExerciseSheet> {
         24,
         MediaQuery.viewInsetsOf(context).bottom + 24,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(def.name, style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 6),
-          Text(
-            'Target: ${def.unit.format(item.target)}. '
-            'Enter what you actually completed.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.muted,
-                ),
-          ),
-          const SizedBox(height: 20),
-          TextField(
-            controller: _controller,
-            keyboardType: TextInputType.number,
-            autofocus: true,
-            decoration: InputDecoration(
-              labelText: def.unit == ExerciseUnit.seconds
-                  ? 'Seconds completed'
-                  : 'Reps completed',
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(def.name, style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 8),
+            Text(
+              def.howTo,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.muted,
+                    height: 1.45,
+                  ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context, item.target),
-                  child: const Text('Hit target'),
-                ),
+            const SizedBox(height: 16),
+            Text(
+              'Target: ${def.unit.format(item.target)}. '
+              'Enter what you actually completed.',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppColors.forestDark,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _controller,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: def.unit == ExerciseUnit.seconds
+                    ? 'Seconds completed'
+                    : 'Reps completed',
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton(
-                  onPressed: () {
-                    final v = int.tryParse(_controller.text.trim());
-                    if (v == null || v < 0) return;
-                    Navigator.pop(context, v);
-                  },
-                  child: const Text('Save'),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context, item.target),
+                    child: const Text('Hit target'),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () {
+                      final v = int.tryParse(_controller.text.trim());
+                      if (v == null || v < 0) return;
+                      Navigator.pop(context, v);
+                    },
+                    child: const Text('Save'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
