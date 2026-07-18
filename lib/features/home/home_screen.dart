@@ -105,9 +105,14 @@ class HomeScreen extends ConsumerWidget {
                   if (!done)
                     FilledButton(
                       onPressed: workout.allMarked
-                          ? () => ref
-                              .read(todaysWorkoutProvider.notifier)
-                              .finishWorkout()
+                          ? () async {
+                              await ref
+                                  .read(todaysWorkoutProvider.notifier)
+                                  .finishWorkout();
+                              if (context.mounted) {
+                                _showCompletionDialog(context, ref);
+                              }
+                            }
                           : null,
                       child: const Text('Complete workout'),
                     )
@@ -131,6 +136,62 @@ class HomeScreen extends ConsumerWidget {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+
+  void _showCompletionDialog(BuildContext context, WidgetRef ref) {
+    final streak = ref.read(streakProvider);
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '✅',
+                style: TextStyle(fontSize: 64),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Workout completed!',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.forestDark,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Great job! You\'re on a ${streak.currentStreak} day streak 🔥',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: AppColors.muted,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'See you tomorrow!',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: AppColors.forest,
+                      fontWeight: FontWeight.w600,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Done'),
+              ),
+            ],
+          ),
         ),
       ),
     );
