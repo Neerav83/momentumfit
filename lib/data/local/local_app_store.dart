@@ -17,9 +17,13 @@ class LocalStorageKeys {
 }
 
 class LocalAppStore {
-  LocalAppStore(this._prefs);
+  LocalAppStore(this._prefs) : _useDatabase = true;
+
+  /// In-memory store for widget/unit tests (no SQLite).
+  LocalAppStore.forTesting(this._prefs) : _useDatabase = false;
 
   final SharedPreferences _prefs;
+  final bool _useDatabase;
   final _db = AppDatabase.instance;
   bool _initialized = false;
 
@@ -32,10 +36,12 @@ class LocalAppStore {
 
   Future<void> initialize() async {
     if (_initialized) return;
-    
-    await _migrateToSqlite();
-    await _loadFromDatabase();
-    
+
+    if (_useDatabase) {
+      await _migrateToSqlite();
+      await _loadFromDatabase();
+    }
+
     _initialized = true;
   }
 
@@ -135,14 +141,14 @@ class LocalAppStore {
 
   Future<void> writeProfile(UserProfile profile) async {
     _profile = profile;
-    await _db.saveProfile(profile);
+    if (_useDatabase) await _db.saveProfile(profile);
   }
 
   Map<String, ExerciseLevel> readLevels() => _levels ?? {};
 
   Future<void> writeLevels(Map<String, ExerciseLevel> levels) async {
     _levels = levels;
-    await _db.saveLevels(levels);
+    if (_useDatabase) await _db.saveLevels(levels);
   }
 
   List<DailyWorkout> readWorkouts() => _workouts ?? [];
@@ -152,21 +158,21 @@ class LocalAppStore {
     final trimmed =
         workouts.length > 90 ? workouts.sublist(workouts.length - 90) : workouts;
     _workouts = trimmed;
-    await _db.saveWorkouts(trimmed);
+    if (_useDatabase) await _db.saveWorkouts(trimmed);
   }
 
   StreakState readStreak() => _streak ?? StreakState.empty;
 
   Future<void> writeStreak(StreakState streak) async {
     _streak = streak;
-    await _db.saveStreak(streak);
+    if (_useDatabase) await _db.saveStreak(streak);
   }
 
   Map<String, int> readAssessment() => _assessment ?? {};
 
   Future<void> writeAssessment(Map<String, int> results) async {
     _assessment = results;
-    await _db.saveAssessment(results);
+    if (_useDatabase) await _db.saveAssessment(results);
   }
 
   Future<void> clearAll() async {
@@ -175,6 +181,6 @@ class LocalAppStore {
     _workouts = null;
     _streak = null;
     _assessment = null;
-    await _db.clearAll();
+    if (_useDatabase) await _db.clearAll();
   }
 }

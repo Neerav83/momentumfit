@@ -20,7 +20,7 @@ class ExerciseDefinition {
   final bool assessmentExercise;
 }
 
-/// Seed catalog for MVP. Assessment exercises drive initial levels.
+/// Seed exercises catalog. Assessment exercises drive initial levels.
 abstract final class ExerciseLibrary {
   static const pushUps = ExerciseDefinition(
     id: 'push_ups',

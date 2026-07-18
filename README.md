@@ -19,7 +19,7 @@ Målet är att bygga en **daglig vana**. Varje pass ska kännas görbart. Appen 
 
 ---
 
-## Funktioner (MVP)
+## Funktioner
 
 | Del | Vad den gör |
 |---|---|
@@ -101,7 +101,7 @@ Motto: *Become a little stronger every day.*
 
 ---
 
-## Framåt (ej i MVP)
+## Framåt
 
 - Notiser / påminnelser
 - Apple Health & Google Health Connect

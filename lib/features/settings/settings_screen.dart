@@ -104,7 +104,7 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
             Text(
-              'MomentumFit · local MVP',
+              'MomentumFit',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: AppColors.muted,

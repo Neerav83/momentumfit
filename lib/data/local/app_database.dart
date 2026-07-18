@@ -23,9 +23,9 @@ class AppDatabase {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'momentumfit.db');
 
-    return await openDatabase(
+    return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -36,7 +36,12 @@ class AppDatabase {
       CREATE TABLE user_profile (
         id INTEGER PRIMARY KEY CHECK (id = 1),
         name TEXT NOT NULL,
-        avatar_emoji TEXT NOT NULL,
+        avatar_id TEXT NOT NULL,
+        age INTEGER NOT NULL,
+        height_cm INTEGER NOT NULL,
+        weight_kg REAL NOT NULL,
+        activity_level TEXT NOT NULL,
+        injuries TEXT NOT NULL,
         onboarding_completed INTEGER NOT NULL DEFAULT 0,
         assessment_completed INTEGER NOT NULL DEFAULT 0,
         created_at TEXT,
@@ -47,11 +52,11 @@ class AppDatabase {
     await db.execute('''
       CREATE TABLE exercise_levels (
         exercise_id TEXT PRIMARY KEY,
-        current_level INTEGER NOT NULL,
-        progress_percent REAL NOT NULL,
-        total_reps INTEGER NOT NULL,
-        successful_sessions INTEGER NOT NULL,
-        last_adapted_at TEXT
+        current_target INTEGER NOT NULL,
+        success_streak INTEGER NOT NULL DEFAULT 0,
+        fail_streak INTEGER NOT NULL DEFAULT 0,
+        personal_best INTEGER NOT NULL DEFAULT 0,
+        history_json TEXT NOT NULL DEFAULT '[]'
       )
     ''');
 
@@ -104,19 +109,35 @@ class AppDatabase {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Migrations go here in the future
+    // Schema was incorrect in v1 — recreate to match domain models.
+    if (oldVersion < 2) {
+      await db.execute('DROP TABLE IF EXISTS user_profile');
+      await db.execute('DROP TABLE IF EXISTS exercise_levels');
+      await db.execute('DROP TABLE IF EXISTS daily_workouts');
+      await db.execute('DROP TABLE IF EXISTS workout_exercises');
+      await db.execute('DROP TABLE IF EXISTS streak_state');
+      await db.execute('DROP TABLE IF EXISTS assessment_results');
+      await _onCreate(db, newVersion);
+    }
   }
 
-  // User Profile operations
   Future<UserProfile?> getProfile() async {
     final db = await database;
     final maps = await db.query('user_profile', limit: 1);
     if (maps.isEmpty) return null;
 
     final map = maps.first;
+    final injuriesRaw = map['injuries'] as String? ?? '["none"]';
+    final injuriesList = jsonDecode(injuriesRaw) as List<dynamic>;
+
     return UserProfile.fromJson({
       'name': map['name'],
-      'avatar': map['avatar_emoji'],
+      'avatarId': map['avatar_id'],
+      'age': map['age'],
+      'heightCm': map['height_cm'],
+      'weightKg': map['weight_kg'],
+      'activityLevel': map['activity_level'],
+      'injuries': injuriesList,
       'onboardingCompleted': map['onboarding_completed'] == 1,
       'assessmentCompleted': map['assessment_completed'] == 1,
       'createdAt': map['created_at'],
@@ -131,7 +152,12 @@ class AppDatabase {
       {
         'id': 1,
         'name': profile.name,
-        'avatar_emoji': profile.avatar.emoji,
+        'avatar_id': profile.avatarId,
+        'age': profile.age,
+        'height_cm': profile.heightCm,
+        'weight_kg': profile.weightKg,
+        'activity_level': profile.activityLevel.name,
+        'injuries': jsonEncode(profile.injuries.map((e) => e.name).toList()),
         'onboarding_completed': profile.onboardingCompleted ? 1 : 0,
         'assessment_completed': profile.assessmentCompleted ? 1 : 0,
         'created_at': profile.createdAt?.toIso8601String(),
@@ -141,7 +167,6 @@ class AppDatabase {
     );
   }
 
-  // Exercise Levels operations
   Future<Map<String, ExerciseLevel>> getLevels() async {
     final db = await database;
     final maps = await db.query('exercise_levels');
@@ -149,13 +174,12 @@ class AppDatabase {
     return {
       for (final map in maps)
         map['exercise_id'] as String: ExerciseLevel(
-          currentLevel: map['current_level'] as int,
-          progressPercent: map['progress_percent'] as double,
-          totalReps: map['total_reps'] as int,
-          successfulSessions: map['successful_sessions'] as int,
-          lastAdaptedAt: map['last_adapted_at'] != null
-              ? DateTime.tryParse(map['last_adapted_at'] as String)
-              : null,
+          exerciseId: map['exercise_id'] as String,
+          currentTarget: map['current_target'] as int,
+          successStreak: map['success_streak'] as int? ?? 0,
+          failStreak: map['fail_streak'] as int? ?? 0,
+          personalBest: map['personal_best'] as int? ?? 0,
+          history: _decodeHistory(map['history_json'] as String?),
         ),
     };
   }
@@ -165,15 +189,18 @@ class AppDatabase {
     final batch = db.batch();
 
     for (final entry in levels.entries) {
+      final level = entry.value;
       batch.insert(
         'exercise_levels',
         {
           'exercise_id': entry.key,
-          'current_level': entry.value.currentLevel,
-          'progress_percent': entry.value.progressPercent,
-          'total_reps': entry.value.totalReps,
-          'successful_sessions': entry.value.successfulSessions,
-          'last_adapted_at': entry.value.lastAdaptedAt?.toIso8601String(),
+          'current_target': level.currentTarget,
+          'success_streak': level.successStreak,
+          'fail_streak': level.failStreak,
+          'personal_best': level.personalBest,
+          'history_json': jsonEncode(
+            level.history.map((h) => h.toJson()).toList(),
+          ),
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
@@ -182,7 +209,19 @@ class AppDatabase {
     await batch.commit(noResult: true);
   }
 
-  // Daily Workouts operations
+  List<LevelHistoryPoint> _decodeHistory(String? raw) {
+    if (raw == null || raw.isEmpty) return const [];
+    try {
+      final list = jsonDecode(raw) as List<dynamic>;
+      return [
+        for (final item in list)
+          LevelHistoryPoint.fromJson(item as Map<String, dynamic>),
+      ];
+    } catch (_) {
+      return const [];
+    }
+  }
+
   Future<List<DailyWorkout>> getWorkouts() async {
     final db = await database;
     final workoutMaps = await db.query(
@@ -209,14 +248,16 @@ class AppDatabase {
         );
       }).toList();
 
-      workouts.add(DailyWorkout(
-        id: workoutId,
-        date: DateTime.parse(workoutMap['date'] as String),
-        exercises: exercises,
-        completedAt: workoutMap['completed_at'] != null
-            ? DateTime.tryParse(workoutMap['completed_at'] as String)
-            : null,
-      ));
+      workouts.add(
+        DailyWorkout(
+          id: workoutId,
+          date: DateTime.parse(workoutMap['date'] as String),
+          exercises: exercises,
+          completedAt: workoutMap['completed_at'] != null
+              ? DateTime.tryParse(workoutMap['completed_at'] as String)
+              : null,
+        ),
+      );
     }
 
     return workouts;
@@ -226,10 +267,9 @@ class AppDatabase {
     final db = await database;
     final batch = db.batch();
 
-    // Clear existing workouts
+    batch.delete('workout_exercises');
     batch.delete('daily_workouts');
 
-    // Insert workouts and their exercises
     for (final workout in workouts) {
       batch.insert(
         'daily_workouts',
@@ -241,14 +281,6 @@ class AppDatabase {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      // Delete existing exercises for this workout
-      batch.delete(
-        'workout_exercises',
-        where: 'workout_id = ?',
-        whereArgs: [workout.id],
-      );
-
-      // Insert exercises
       for (var i = 0; i < workout.exercises.length; i++) {
         final exercise = workout.exercises[i];
         batch.insert(
@@ -268,7 +300,6 @@ class AppDatabase {
     await batch.commit(noResult: true);
   }
 
-  // Streak State operations
   Future<StreakState> getStreak() async {
     final db = await database;
     final maps = await db.query('streak_state', limit: 1);
@@ -304,7 +335,6 @@ class AppDatabase {
     );
   }
 
-  // Assessment Results operations
   Future<Map<String, int>> getAssessment() async {
     final db = await database;
     final maps = await db.query('assessment_results');
@@ -334,15 +364,14 @@ class AppDatabase {
     await batch.commit(noResult: true);
   }
 
-  // Clear all data
   Future<void> clearAll() async {
     final db = await database;
     final batch = db.batch();
 
     batch.delete('user_profile');
     batch.delete('exercise_levels');
-    batch.delete('daily_workouts');
     batch.delete('workout_exercises');
+    batch.delete('daily_workouts');
     batch.delete('streak_state');
     batch.delete('assessment_results');
 
