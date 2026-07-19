@@ -51,4 +51,12 @@ class ReminderSettingsNotifier extends Notifier<ReminderSettings> {
     await service.initialize();
     await service.syncSchedule(settings);
   }
+
+  /// Cancel scheduled notifications and restore defaults (e.g. on full reset).
+  Future<void> clearOnReset() async {
+    final service = ref.read(notificationServiceProvider);
+    await service.initialize();
+    await service.cancelDaily();
+    state = ReminderSettings.defaults;
+  }
 }

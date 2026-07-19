@@ -57,7 +57,7 @@ class CoachInsights {
     required this.improvements,
     required this.difficultyTrend,
     required this.monthlyStats,
-    required this.factsForPrompt,
+    required this._factsForPrompt,
   });
 
   final CoachScenario scenario;
@@ -73,7 +73,16 @@ class CoachInsights {
   final List<ExerciseProgressFact> improvements;
   final String difficultyTrend;
   final MonthlyCoachStats? monthlyStats;
-  final List<String> factsForPrompt;
+  final List<String> _factsForPrompt;
+
+  /// Prompt facts. Private fields (name, injuries) are omitted unless opted in.
+  List<String> factsForPrompt({bool includePrivateDetails = false}) {
+    if (includePrivateDetails) return List.unmodifiable(_factsForPrompt);
+    return [
+      for (final fact in _factsForPrompt)
+        if (!fact.startsWith('Name:') && !fact.startsWith('Injuries:')) fact,
+    ];
+  }
 }
 
 class MonthlyCoachStats {
@@ -133,6 +142,7 @@ abstract final class CoachInsightBuilder {
     );
 
     final facts = <String>[
+      // Name/injuries are filtered out unless the user opts into private AI.
       'Name: ${profile.name}',
       'Activity level: ${profile.activityLevel.label}',
       'Injuries: ${profile.injuries.map((i) => i.label).join(', ')}',

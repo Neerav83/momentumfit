@@ -60,6 +60,8 @@ class ProfileNotifier extends Notifier<UserProfile?> {
     state = null;
     ref.read(levelsProvider.notifier).refresh();
     ref.read(streakProvider.notifier).refresh();
+    ref.invalidate(todaysWorkoutProvider);
+    ref.invalidate(assessmentResultsProvider);
   }
 }
 
@@ -85,7 +87,16 @@ final streakProvider =
 class StreakNotifier extends Notifier<StreakState> {
   @override
   StreakState build() {
-    return ref.read(momentumRepositoryProvider).getStreak();
+    final repo = ref.read(momentumRepositoryProvider);
+    final stored = repo.readStoredStreak();
+    final evaluated = repo.getStreak();
+    // Persist freeze spend / streak break so it survives the next launch.
+    if (stored.currentStreak != evaluated.currentStreak ||
+        stored.freezeCount != evaluated.freezeCount ||
+        stored.lastCompletedDate != evaluated.lastCompletedDate) {
+      Future.microtask(() => repo.persistStreak(evaluated));
+    }
+    return evaluated;
   }
 
   void set(StreakState streak) => state = streak;

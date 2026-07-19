@@ -10,7 +10,13 @@ abstract final class AppColors {
   static const mist = Color(0xFFE8EDE9);
   static const ink = Color(0xFF1A2420);
   static const muted = Color(0xFF5C6B63);
-  static const streak = Color(0xFFD97706);
+  /// Dark amber for text on light streak backgrounds (WCAG AA).
+  static const streak = Color(0xFF92400E);
+  static const streakBgStart = Color(0xFFFFF7ED);
+  static const streakBgEnd = Color(0xFFFEF3C7);
+  static const successBgStart = Color(0xFFE8F2EC);
+  static const successBgEnd = Color(0xFFF3F0E8);
+  static const danger = Color(0xFFB91C1C);
   static const surface = Color(0xFFFAFAF7);
 }
 
@@ -27,6 +33,7 @@ abstract final class AppTheme {
         secondary: AppColors.moss,
         surface: AppColors.surface,
         onSurface: AppColors.ink,
+        error: AppColors.danger,
       ),
       scaffoldBackgroundColor: AppColors.sand,
     );
@@ -61,6 +68,28 @@ abstract final class AppTheme {
           color: AppColors.ink,
           fontWeight: FontWeight.w600,
           fontSize: 22,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: Colors.white,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: AppColors.surface,
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.forestDark,
+        contentTextStyle: textTheme.bodyMedium?.copyWith(color: Colors.white),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(

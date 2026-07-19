@@ -26,6 +26,9 @@ class AppDatabase {
     return openDatabase(
       path,
       version: 2,
+      onConfigure: (db) async {
+        await db.execute('PRAGMA foreign_keys = ON');
+      },
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -109,7 +112,8 @@ class AppDatabase {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Schema was incorrect in v1 — recreate to match domain models.
+    // v1 → v2 was a one-time schema correction. Future upgrades must be
+    // additive (ALTER TABLE / new tables) — never blind DROP of user data.
     if (oldVersion < 2) {
       await db.execute('DROP TABLE IF EXISTS user_profile');
       await db.execute('DROP TABLE IF EXISTS exercise_levels');
@@ -128,21 +132,30 @@ class AppDatabase {
 
     final map = maps.first;
     final injuriesRaw = map['injuries'] as String? ?? '["none"]';
-    final injuriesList = jsonDecode(injuriesRaw) as List<dynamic>;
+    List<dynamic> injuriesList;
+    try {
+      injuriesList = jsonDecode(injuriesRaw) as List<dynamic>;
+    } catch (_) {
+      injuriesList = const ['none'];
+    }
 
-    return UserProfile.fromJson({
-      'name': map['name'],
-      'avatarId': map['avatar_id'],
-      'age': map['age'],
-      'heightCm': map['height_cm'],
-      'weightKg': map['weight_kg'],
-      'activityLevel': map['activity_level'],
-      'injuries': injuriesList,
-      'onboardingCompleted': map['onboarding_completed'] == 1,
-      'assessmentCompleted': map['assessment_completed'] == 1,
-      'createdAt': map['created_at'],
-      'lastAssessmentAt': map['last_assessment_at'],
-    });
+    try {
+      return UserProfile.fromJson({
+        'name': map['name'],
+        'avatarId': map['avatar_id'],
+        'age': map['age'],
+        'heightCm': map['height_cm'],
+        'weightKg': map['weight_kg'],
+        'activityLevel': map['activity_level'],
+        'injuries': injuriesList,
+        'onboardingCompleted': map['onboarding_completed'] == 1,
+        'assessmentCompleted': map['assessment_completed'] == 1,
+        'createdAt': map['created_at'],
+        'lastAssessmentAt': map['last_assessment_at'],
+      });
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> saveProfile(UserProfile profile) async {
@@ -228,50 +241,48 @@ class AppDatabase {
       'daily_workouts',
       orderBy: 'date ASC',
     );
+    if (workoutMaps.isEmpty) return const [];
 
-    final workouts = <DailyWorkout>[];
-    for (final workoutMap in workoutMaps) {
-      final workoutId = workoutMap['id'] as String;
-      final exerciseMaps = await db.query(
-        'workout_exercises',
-        where: 'workout_id = ?',
-        whereArgs: [workoutId],
-        orderBy: 'position ASC',
-      );
+    final ids = workoutMaps.map((m) => m['id'] as String).toList();
+    final placeholders = List.filled(ids.length, '?').join(',');
+    final exerciseMaps = await db.rawQuery(
+      'SELECT * FROM workout_exercises '
+      'WHERE workout_id IN ($placeholders) '
+      'ORDER BY workout_id ASC, position ASC',
+      ids,
+    );
 
-      final exercises = exerciseMaps.map((map) {
-        return WorkoutExercise(
-          exerciseId: map['exercise_id'] as String,
-          target: map['target'] as int,
-          completed: map['completed'] as int?,
-          done: map['done'] == 1,
-        );
-      }).toList();
+    final byWorkout = <String, List<WorkoutExercise>>{};
+    for (final map in exerciseMaps) {
+      final workoutId = map['workout_id'] as String;
+      byWorkout.putIfAbsent(workoutId, () => []).add(
+            WorkoutExercise(
+              exerciseId: map['exercise_id'] as String,
+              target: map['target'] as int,
+              completed: map['completed'] as int?,
+              done: map['done'] == 1,
+            ),
+          );
+    }
 
-      workouts.add(
+    return [
+      for (final workoutMap in workoutMaps)
         DailyWorkout(
-          id: workoutId,
+          id: workoutMap['id'] as String,
           date: DateTime.parse(workoutMap['date'] as String),
-          exercises: exercises,
+          exercises: byWorkout[workoutMap['id'] as String] ?? const [],
           completedAt: workoutMap['completed_at'] != null
               ? DateTime.tryParse(workoutMap['completed_at'] as String)
               : null,
         ),
-      );
-    }
-
-    return workouts;
+    ];
   }
 
-  Future<void> saveWorkouts(List<DailyWorkout> workouts) async {
+  /// Upsert a single workout and replace its exercises in one transaction.
+  Future<void> upsertWorkout(DailyWorkout workout) async {
     final db = await database;
-    final batch = db.batch();
-
-    batch.delete('workout_exercises');
-    batch.delete('daily_workouts');
-
-    for (final workout in workouts) {
-      batch.insert(
+    await db.transaction((txn) async {
+      await txn.insert(
         'daily_workouts',
         {
           'id': workout.id,
@@ -281,6 +292,13 @@ class AppDatabase {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
+      await txn.delete(
+        'workout_exercises',
+        where: 'workout_id = ?',
+        whereArgs: [workout.id],
+      );
+
+      final batch = txn.batch();
       for (var i = 0; i < workout.exercises.length; i++) {
         final exercise = workout.exercises[i];
         batch.insert(
@@ -295,9 +313,68 @@ class AppDatabase {
           },
         );
       }
-    }
+      await batch.commit(noResult: true);
+    });
+  }
 
-    await batch.commit(noResult: true);
+  /// Replace full history (used for prefs migration / trim). Prefer [upsertWorkout].
+  Future<void> saveWorkouts(List<DailyWorkout> workouts) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('workout_exercises');
+      await txn.delete('daily_workouts');
+
+      final batch = txn.batch();
+      for (final workout in workouts) {
+        batch.insert(
+          'daily_workouts',
+          {
+            'id': workout.id,
+            'date': workout.date.toIso8601String(),
+            'completed_at': workout.completedAt?.toIso8601String(),
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+
+        for (var i = 0; i < workout.exercises.length; i++) {
+          final exercise = workout.exercises[i];
+          batch.insert(
+            'workout_exercises',
+            {
+              'workout_id': workout.id,
+              'exercise_id': exercise.exerciseId,
+              'target': exercise.target,
+              'completed': exercise.completed,
+              'done': exercise.done ? 1 : 0,
+              'position': i,
+            },
+          );
+        }
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
+  /// Drop workouts older than [keepNewest] count (by date).
+  Future<void> trimWorkouts({required int keepNewest}) async {
+    final db = await database;
+    final maps = await db.query(
+      'daily_workouts',
+      columns: ['id'],
+      orderBy: 'date DESC',
+    );
+    if (maps.length <= keepNewest) return;
+
+    final toDelete = maps.skip(keepNewest).map((m) => m['id'] as String);
+    await db.transaction((txn) async {
+      for (final id in toDelete) {
+        await txn.delete(
+          'daily_workouts',
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+      }
+    });
   }
 
   Future<StreakState> getStreak() async {

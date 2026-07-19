@@ -1,10 +1,12 @@
 import 'package:uuid/uuid.dart';
 
+import '../../domain/models/enums.dart';
 import '../../domain/models/exercise.dart';
 import '../../domain/models/exercise_level.dart';
 import '../../domain/models/user_profile.dart';
 import '../../domain/models/workout.dart';
 import '../../domain/services/adaptive_difficulty.dart';
+import '../../domain/services/input_limits.dart';
 import '../../domain/services/streak_service.dart';
 import '../local/local_app_store.dart';
 
@@ -19,6 +21,8 @@ class MomentumRepository {
   Future<void> saveProfile(UserProfile profile) => _store.writeProfile(profile);
 
   Map<String, ExerciseLevel> getLevels() => _store.readLevels();
+
+  StreakState readStoredStreak() => _store.readStreak();
 
   StreakState getStreak() {
     return StreakService.evaluateMissedDays(
@@ -36,6 +40,7 @@ class MomentumRepository {
   Future<void> completeOnboarding(UserProfile profile) async {
     await saveProfile(
       profile.copyWith(
+        name: InputLimits.clampName(profile.name),
         onboardingCompleted: true,
         createdAt: profile.createdAt ?? DateTime.now(),
       ),
@@ -46,11 +51,15 @@ class MomentumRepository {
     required UserProfile profile,
     required Map<String, int> results,
   }) async {
+    final clamped = {
+      for (final entry in results.entries)
+        entry.key: _clampForExercise(entry.key, entry.value),
+    };
     final levels = AdaptiveDifficulty.seedLevels(
       profile: profile,
-      assessmentResults: results,
+      assessmentResults: clamped,
     );
-    await _store.writeAssessment(results);
+    await _store.writeAssessment(clamped);
     await _store.writeLevels(levels);
     await saveProfile(
       profile.copyWith(
@@ -78,7 +87,7 @@ class MomentumRepository {
       levels: levels,
       dayIndex: workouts.length,
     );
-    await _store.writeWorkouts([...workouts, workout]);
+    await _store.upsertWorkout(workout);
     return workout;
   }
 
@@ -87,9 +96,10 @@ class MomentumRepository {
     required int exerciseIndex,
     required int completed,
   }) async {
+    final exerciseId = workout.exercises[exerciseIndex].exerciseId;
     final exercises = [...workout.exercises];
     exercises[exerciseIndex] = exercises[exerciseIndex].copyWith(
-      completed: completed,
+      completed: _clampForExercise(exerciseId, completed),
       done: true,
     );
     final updated = workout.copyWith(exercises: exercises);
@@ -126,14 +136,14 @@ class MomentumRepository {
   }
 
   Future<void> _replaceWorkout(DailyWorkout workout) async {
-    final workouts = [..._store.readWorkouts()];
-    final index = workouts.indexWhere((w) => w.id == workout.id);
-    if (index >= 0) {
-      workouts[index] = workout;
-    } else {
-      workouts.add(workout);
-    }
-    await _store.writeWorkouts(workouts);
+    await _store.upsertWorkout(workout);
+  }
+
+  int _clampForExercise(String exerciseId, int value) {
+    final unit = ExerciseLibrary.byId(exerciseId).unit;
+    return unit == ExerciseUnit.seconds
+        ? InputLimits.clampSeconds(value)
+        : InputLimits.clampReps(value);
   }
 
   Future<void> resetAll() => _store.clearAll();

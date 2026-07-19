@@ -13,6 +13,9 @@ abstract final class StreakService {
   }
 
   /// Apply streak rules when a workout is completed today.
+  ///
+  /// Call [evaluateMissedDays] first so freezes have already advanced
+  /// [StreakState.lastCompletedDate] when protecting missed days.
   static StreakState onWorkoutCompleted({
     required StreakState current,
     required DateTime completedAt,
@@ -30,7 +33,7 @@ abstract final class StreakService {
       if (gap == 1) {
         streak = current.currentStreak + 1;
       } else if (gap > 1) {
-        // Missed day(s) — streak resets (freeze handled separately later).
+        // Missed day(s) without freeze coverage — streak resets.
         streak = 1;
       }
     }
@@ -57,6 +60,10 @@ abstract final class StreakService {
   }
 
   /// Evaluate whether the streak should break due to a missed day.
+  ///
+  /// When freezes cover the miss, consume them and advance
+  /// [StreakState.lastCompletedDate] to yesterday so the next completion
+  /// continues the streak (gap == 1).
   static StreakState evaluateMissedDays({
     required StreakState current,
     required DateTime now,
@@ -75,7 +82,13 @@ abstract final class StreakService {
 
     if (missedDays <= freezes) {
       freezes -= missedDays;
-      return current.copyWith(freezeCount: freezes);
+      // Treat freeze-protected days as completed so the next workout
+      // continues the streak instead of resetting.
+      final protectedThrough = today.subtract(const Duration(days: 1));
+      return current.copyWith(
+        freezeCount: freezes,
+        lastCompletedDate: protectedThrough,
+      );
     }
 
     return current.copyWith(

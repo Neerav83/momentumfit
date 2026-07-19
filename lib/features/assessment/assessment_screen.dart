@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../domain/models/enums.dart';
 import '../../domain/models/exercise.dart';
+import '../../domain/services/input_limits.dart';
 import '../../providers/app_providers.dart';
 
 class AssessmentScreen extends ConsumerStatefulWidget {
@@ -28,6 +30,19 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
     super.dispose();
   }
 
+  void _goBack() {
+    if (_saving || _index == 0) return;
+    final previous = _exercises[_index - 1];
+    final previousValue = _results[previous.id];
+    setState(() {
+      _index -= 1;
+      _controller.text = previousValue?.toString() ?? '';
+      _controller.selection = TextSelection.collapsed(
+        offset: _controller.text.length,
+      );
+    });
+  }
+
   Future<void> _submitCurrent() async {
     if (_saving) return;
 
@@ -39,10 +54,25 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
       return;
     }
 
+    final max = _current.unit == ExerciseUnit.seconds
+        ? InputLimits.maxSeconds
+        : InputLimits.maxReps;
+    if (value > max) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Max is $max for this exercise')),
+      );
+      return;
+    }
+
     _results[_current.id] = value;
 
     if (_index < _exercises.length - 1) {
-      _controller.clear();
+      final next = _exercises[_index + 1];
+      final nextValue = _results[next.id];
+      _controller.text = nextValue?.toString() ?? '';
+      _controller.selection = TextSelection.collapsed(
+        offset: _controller.text.length,
+      );
       setState(() => _index += 1);
       return;
     }
@@ -50,12 +80,13 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
     setState(() => _saving = true);
     try {
       await ref.read(profileProvider.notifier).completeAssessment(_results);
-      // Router redirect also handles this; go explicitly as a fallback.
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save assessment: $e')),
+        const SnackBar(
+          content: Text('Could not save assessment. Please try again.'),
+        ),
       );
     }
   }
@@ -64,6 +95,8 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final progress = (_index + 1) / _exercises.length;
+    final unitLabel =
+        _current.unit == ExerciseUnit.seconds ? 'Seconds' : 'Reps';
 
     return Scaffold(
       body: SafeArea(
@@ -97,67 +130,90 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                'Exercise ${_index + 1} of ${_exercises.length}',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: AppColors.muted,
+              Semantics(
+                label: 'Exercise ${_index + 1} of ${_exercises.length}',
+                child: Text(
+                  'Exercise ${_index + 1} of ${_exercises.length}',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: AppColors.muted,
+                  ),
                 ),
               ),
-              const Spacer(),
-              Center(
-                child: Column(
-                  children: [
-                    Text(
-                      _current.name,
-                      style: theme.textTheme.displaySmall?.copyWith(
-                        color: AppColors.ink,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      _current.howTo,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColors.muted,
-                        height: 1.45,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 28),
-                    SizedBox(
-                      width: 160,
-                      child: TextField(
-                        controller: _controller,
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.headlineMedium,
-                        decoration: InputDecoration(
-                          hintText:
-                              _current.unit.name == 'seconds' ? 'sec' : 'reps',
+              const SizedBox(height: 24),
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        Text(
+                          _current.name,
+                          style: theme.textTheme.displaySmall?.copyWith(
+                            color: AppColors.ink,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        onSubmitted: (_) => _submitCurrent(),
-                      ),
+                        const SizedBox(height: 12),
+                        Text(
+                          _current.howTo,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: AppColors.muted,
+                            height: 1.45,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 28),
+                        SizedBox(
+                          width: 200,
+                          child: TextField(
+                            controller: _controller,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.headlineMedium,
+                            decoration: InputDecoration(
+                              labelText: unitLabel,
+                              hintText: _current.unit == ExerciseUnit.seconds
+                                  ? 'sec'
+                                  : 'reps',
+                            ),
+                            onSubmitted: (_) => _submitCurrent(),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-              const Spacer(),
-              FilledButton(
-                onPressed: _saving ? null : _submitCurrent,
-                child: _saving
-                    ? const SizedBox(
-                        height: 22,
-                        width: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        _index == _exercises.length - 1
-                            ? 'Save & start'
-                            : 'Next exercise',
+              Row(
+                children: [
+                  if (_index > 0)
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _saving ? null : _goBack,
+                        child: const Text('Back'),
                       ),
+                    ),
+                  if (_index > 0) const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton(
+                      onPressed: _saving ? null : _submitCurrent,
+                      child: _saving
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              _index == _exercises.length - 1
+                                  ? 'Save & start'
+                                  : 'Next exercise',
+                            ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
