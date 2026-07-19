@@ -1,0 +1,218 @@
+{
+  "@@locale": "sv",
+  
+  "appName": "MomentumFit",
+  "appTagline": "Bli lite starkare varje dag.",
+  
+  "goodMorning": "God morgon",
+  "goodAfternoon": "God eftermiddag",
+  "goodEvening": "God kväll",
+  
+  "settings": "Inställningar",
+  "reminders": "Påminnelser",
+  "aiCoach": "AI-Coach",
+  "training": "Träning",
+  "dangerZone": "Farlig zon",
+  "language": "Språk",
+  
+  "dailyReminder": "Daglig påminnelse",
+  "dailyReminderDescription": "Få en påminnelse så du inte missar en dag",
+  "dailyReminderEnabled": "Lokal avisering kl {time}",
+  "reminderTime": "Påminnelsetid",
+  
+  "personalizedAiNudges": "Personliga AI-tips",
+  "aiConsentEnabled": "Träningsstatistik kan skickas till coach-tjänsten. Namn och skador förblir privata.",
+  "aiConsentDisabled": "Använder lugna offline-tips — inget lämnar din enhet.",
+  
+  "retakeAssessment": "Gör om bedömning",
+  "retakeAssessmentSubtitle": "Rekommenderas var 4:e vecka",
+  "retakeAssessmentDialogTitle": "Gör om bedömning?",
+  "retakeAssessmentDialogBody": "Dina nuvarande träningsmål kommer att räknas om från en ny konditionstest.",
+  "cancel": "Avbryt",
+  "continue": "Fortsätt",
+  
+  "resetAllData": "Återställ all data",
+  "resetAllDataSubtitle": "Rensar profil, streaks och historik",
+  "resetDialogTitle": "Återställa allt?",
+  "resetDialogBody": "Detta kan inte ångras. Du kommer att gå igenom introduktionen igen.",
+  "reset": "Återställ",
+  
+  "languageSystemDefault": "Systemstandard",
+  "languageEnglish": "English",
+  "languageSwedish": "Svenska",
+  
+  "todaysWorkout": "Dagens pass",
+  "todaysWorkoutSubtitle": "Bara några övningar. Håll det enkelt.",
+  "noWorkoutYet": "Inget pass ännu.",
+  "logExercisePrompt": "Logga varje övning för att slutföra dagens pass.",
+  "completeWorkout": "Slutför passet",
+  
+  "youAreDoneForToday": "Du är klar för idag",
+  "niceworkStreak": "Bra jobbat — {streak} dagars streak.",
+  "nicework": "Bra jobbat.",
+  "restUpNewWorkoutTomorrow": "Vila upp dig — ett nytt pass väntar imorgon.",
+  
+  "dayStreak": "{count} dagars streak",
+  "streakFreezesReady": "{count, plural, =1{1 streak freeze redo} other{{count} streak freezes redo}}",
+  "showUpTomorrowToKeepAlive": "Dyk upp imorgon för att hålla den vid liv",
+  "showUpTodayToKeepAlive": "Dyk upp idag för att hålla den vid liv",
+  
+  "workoutCompleted": "Passet slutfört",
+  "workoutCompletedMessage": "Bra jobbat. Du har en {streak}-dagars streak. Vi ses imorgon.",
+  "done": "Klart",
+  
+  "coach": "Coach",
+  "coachUnavailable": "Coach är inte tillgänglig just nu.",
+  "retry": "Försök igen",
+  
+  "didAndTarget": "Gjorde {completed} · mål {target}",
+  "target": "Mål {target}",
+  "edit": "Redigera",
+  "log": "Logga",
+  
+  "targetEnterCompleted": "Mål: {target}. Ange vad du faktiskt slutförde.",
+  "secondsCompleted": "Sekunder slutförda",
+  "repsCompleted": "Reps slutförda",
+  "enterValidNumber": "Ange ett giltigt nummer (0 eller mer).",
+  "maxForExercise": "Max är {max} för denna övning.",
+  "hitTarget": "Nådde målet",
+  "save": "Spara",
+  
+  "whoIsTraining": "Vem tränar?",
+  "pickAvatarPrompt": "Välj en avatar och berätta vad vi ska kalla dig.",
+  "yourName": "Ditt namn",
+  "nameHint": "Alex",
+  "chooseYourAvatar": "Välj din avatar",
+  
+  "back": "Tillbaka",
+  "next": "Nästa",
+  
+  "stepOfTotal": "Steg {current} av {total}",
+  
+  "aFewBasics": "Några grundläggande uppgifter",
+  "aFewBasicsSubtitle": "Hjälper oss att anpassa passen försiktigt efter dig.",
+  "age": "Ålder",
+  "height": "Längd",
+  "weight": "Vikt",
+  "heightCm": "{value} cm",
+  "weightKg": "{value} kg",
+  
+  "howActiveAreYou": "Hur aktiv är du?",
+  "howActiveSubtitle": "Vi börjar enklare än du tror — med avsikt.",
+  
+  "activityLevelBeginner": "Nybörjare",
+  "activityLevelBeginnerDesc": "Precis börjat",
+  "activityLevelSometimes": "Ibland aktiv",
+  "activityLevelSometimesDesc": "Några gånger i månaden",
+  "activityLevelRegular": "Regelbundet aktiv",
+  "activityLevelRegularDesc": "Flera gånger i veckan",
+  
+  "anythingToAvoid": "Något att undvika?",
+  "anythingToAvoidSubtitle": "Valfritt. Vi hoppar över övningar som belastar dessa områden.",
+  
+  "injuryKnees": "Knän",
+  "injuryBack": "Rygg",
+  "injuryShoulders": "Axlar",
+  "injuryNone": "Inget",
+  "injuryNoneDesc": "Inga begränsningar",
+  "injuryAdaptWorkouts": "Anpassa pass kring detta",
+  
+  "fitnessCheck": "Konditionstest",
+  "fitnessCheckSubtitle": "I stället för att gissa vad du kan — mät det. Ta din tid. Bra form slår maxinsats.",
+  "exerciseOfTotal": "Övning {current} av {total}",
+  "seconds": "Sekunder",
+  "reps": "Reps",
+  "secondsHint": "sek",
+  "repsHint": "reps",
+  "enterValidNumberSimple": "Ange ett giltigt nummer",
+  "maxForExerciseSimple": "Max är {max} för denna övning",
+  "saveAndStart": "Spara och starta",
+  "nextExercise": "Nästa övning",
+  "couldNotSaveAssessment": "Kunde inte spara bedömning. Försök igen.",
+  
+  "progress": "Framsteg",
+  "progressSubtitle": "Små vinster, tydligt synliga.",
+  "streak": "Streak",
+  "best": "Bäst",
+  "workouts": "Pass",
+  "recentWorkouts": "Senaste passen",
+  "completeWorkoutToSeeHistory": "Slutför ett pass för att se din historik här.",
+  "exercisesLogged": "{count} övningar loggade",
+  "achievements": "Prestationer",
+  "exerciseTargets": "Träningsmål",
+  "completeAssessmentToStart": "Slutför din bedömning för att börja spåra.",
+  "targetValue": "Mål {value}",
+  "prValue": "PR {value}",
+  "recentPerformanceChart": "Senaste prestationsdiagram för {name}",
+  
+  "achievementFirstStepTitle": "Första steget",
+  "achievementFirstStepDesc": "Slutför ditt första pass",
+  "achievementThreeInRowTitle": "Tre i rad",
+  "achievementThreeInRowDesc": "Nå en 3-dagars streak",
+  "achievementWeekOfMomentumTitle": "Vecka av momentum",
+  "achievementWeekOfMomentumDesc": "Nå en 7-dagars streak",
+  "achievementTenSessionsTitle": "Tio sessioner",
+  "achievementTenSessionsDesc": "Slutför 10 pass",
+  "achievementSafetyNetTitle": "Säkerhetsnät",
+  "achievementSafetyNetDesc": "Tjäna en streak freeze",
+  
+  "exercisePushUps": "Armhävningar",
+  "exercisePushUpsCue": "Bröstet mot golvet med kontroll.",
+  "exercisePushUpsHowTo": "Börja i en hög plank med händerna under axlarna. Sänk bröstet mot golvet och håll armbågarna nära kroppen, tryck sedan tillbaka upp. Håll kroppen i en rak linje från huvud till hälar.",
+  
+  "exerciseKneePushUps": "Knäarmhävningar",
+  "exerciseKneePushUpsCue": "Samma som armhävningar, från knäna.",
+  "exerciseKneePushUpsHowTo": "Knäböj på golvet och placera händerna under axlarna. Håll en rak linje från knän till huvud. Sänk bröstet mot golvet och tryck sedan tillbaka upp med kontroll.",
+  
+  "exerciseChairDips": "Stoldips",
+  "exerciseChairDipsCue": "Sänk tills armbågarna är nära 90°.",
+  "exerciseChairDipsHowTo": "Sitt på kanten av en stabil stol, händerna vid höfterna. Glid framåt så höfterna är utanför sitsen. Böj armbågarna för att sänka kroppen, tryck sedan upp. Håll axlarna nere och borta från öronen.",
+  
+  "exerciseSquats": "Knäböj",
+  "exerciseSquatsCue": "Sitt bakåt, bröst upp, hälar ner.",
+  "exerciseSquatsHowTo": "Stå med fötterna ungefär axelbrett isär. Sitt bakåt med höfterna som om du ska sätta dig i en stol, håll bröstet uppåt och sänk dig tills låren är ungefär parallella med golvet (eller så djupt som är bekvämt). Tryck genom hälarna för att ställa dig upp.",
+  
+  "exerciseLunges": "Utfall",
+  "exerciseLungesCue": "Alternera ben. Räkna varje steg.",
+  "exerciseLungesHowTo": "Ta ett steg framåt med en fot och böj båda knäna tills det bakre knäet nästan rör golvet. Håll det främre knäet över ankeln. Tryck tillbaka till stående och byt ben. Räkna totala reps över båda sidorna.",
+  
+  "exerciseGluteBridge": "Höftlyft",
+  "exerciseGluteBridgeCue": "Spänn högst upp, sänk sedan.",
+  "exerciseGluteBridgeHowTo": "Ligg på rygg med knäna böjda och fötterna platta på golvet. Tryck genom hälarna för att lyfta höfterna tills kroppen bildar en rak linje från axlar till knän. Spänn gluteusmusklerna högst upp och sänk sedan långsamt.",
+  
+  "exerciseCalfRaises": "Tåhävningar",
+  "exerciseCalfRaisesCue": "Res dig på tårna, pausa, sänk.",
+  "exerciseCalfRaisesHowTo": "Stå upprätt med fötterna höftbrett isär. Res dig på tåspetsarna så högt du kan, pausa kort och sänk sedan med kontroll. Håll i en vägg eller stol för balans om det behövs.",
+  
+  "exercisePlank": "Plankan",
+  "exercisePlankCue": "Håll en rak linje — ingen hängmage.",
+  "exercisePlankHowTo": "Placera underarmarna på golvet med armbågarna under axlarna, eller håll en hög plank på händerna. Håll kroppen rak från huvud till hälar. Spänn magen, krama ihop gluteus och andas jämnt. Sluta om formen går sönder.",
+  
+  "exerciseSidePlank": "Sidplankan",
+  "exerciseSidePlankCue": "Logga den svagare sidans tid.",
+  "exerciseSidePlankHowTo": "Ligg på ena sidan med armbågen under axeln. Lyft höfterna så kroppen bildar en rak linje. Håll, byt sedan sida. Logga tiden för din svagare sida.",
+  
+  "exerciseDeadBug": "Dödskalbaggen",
+  "exerciseDeadBugCue": "Långsamma rörelser, rygg nertryckt.",
+  "exerciseDeadBugHowTo": "Ligg på rygg med armarna mot taket och knäna böjda 90°. Sträck långsamt ut motsatt arm och ben mot golvet utan att låta ländryggen välva. Återvänd och byt sida. En rep = båda sidorna en gång.",
+  
+  "exerciseBirdDog": "Fågelhund",
+  "exerciseBirdDogCue": "Motsatt arm och ben, byt sedan.",
+  "exerciseBirdDogHowTo": "Börja på alla fyra med händerna under axlarna och knäna under höfterna. Sträck ut en arm framåt och motsatt ben bakåt, håll höfterna i nivå. Pausa, återvänd, byt sedan. En rep = båda sidorna en gång.",
+  
+  "exerciseJumpingJacks": "Hopptomtar",
+  "exerciseJumpingJacksCue": "Jämn rytm, mjuka landningar.",
+  "exerciseJumpingJacksHowTo": "Stå med fötterna ihop och armarna vid sidorna. Hoppa ut med fötterna samtidigt som du lyfter armarna över huvudet, hoppa sedan tillbaka till start. Landa mjukt och håll en jämn takt.",
+  
+  "exerciseHighKnees": "Höga knän",
+  "exerciseHighKneesCue": "Lyft knäna upp, var lätt.",
+  "exerciseHighKneesHowTo": "Jogga på plats medan du lyfter knäna upp mot höfthöjd. Pumpa armarna och stanna på tåspetsarna. Räkna varje knälyft som en rep.",
+  
+  "exerciseMountainClimbers": "Bergsklättrare",
+  "exerciseMountainClimbersCue": "Höfter i nivå när du byter ben.",
+  "exerciseMountainClimbersHowTo": "Börja i en hög plank. Dra ett knä mot bröstet och byt sedan snabbt ben som om du springer på plats. Håll höfterna låga och i nivå. Räkna varje knälyft som en rep.",
+  
+  "exerciseUnknown": "Okänd övning",
+  "exerciseUnknownCue": "Denna övning finns inte längre i katalogen.",
+  "exerciseUnknownHowTo": "Hoppa över eller gör om din bedömning för att uppdatera din plan."
+}

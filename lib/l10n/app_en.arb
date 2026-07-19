@@ -1,0 +1,353 @@
+{
+  "@@locale": "en",
+  
+  "appName": "MomentumFit",
+  "appTagline": "Become a little stronger every day.",
+  
+  "goodMorning": "Good morning",
+  "goodAfternoon": "Good afternoon",
+  "goodEvening": "Good evening",
+  
+  "settings": "Settings",
+  "reminders": "Reminders",
+  "aiCoach": "AI Coach",
+  "training": "Training",
+  "dangerZone": "Danger zone",
+  "language": "Language",
+  
+  "dailyReminder": "Daily reminder",
+  "dailyReminderDescription": "Get a nudge so you don't miss a day",
+  "dailyReminderEnabled": "Local notification at {time}",
+  "@dailyReminderEnabled": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderTime": "Reminder time",
+  
+  "personalizedAiNudges": "Personalized AI nudges",
+  "aiConsentEnabled": "Workout stats may be sent to the coach service. Name and injuries stay private.",
+  "aiConsentDisabled": "Uses calm offline tips only — nothing leaves your device.",
+  
+  "retakeAssessment": "Retake assessment",
+  "retakeAssessmentSubtitle": "Recommended every 4 weeks",
+  "retakeAssessmentDialogTitle": "Retake assessment?",
+  "retakeAssessmentDialogBody": "Your current exercise targets will be recalculated from a new fitness check.",
+  "cancel": "Cancel",
+  "continue": "Continue",
+  
+  "resetAllData": "Reset all data",
+  "resetAllDataSubtitle": "Clears profile, streaks and history",
+  "resetDialogTitle": "Reset everything?",
+  "resetDialogBody": "This cannot be undone. You'll go through onboarding again.",
+  "reset": "Reset",
+  
+  "languageSystemDefault": "System default",
+  "languageEnglish": "English",
+  "languageSwedish": "Svenska",
+  
+  "todaysWorkout": "Today's workout",
+  "todaysWorkoutSubtitle": "Just a few moves. Keep it easy.",
+  "noWorkoutYet": "No workout yet.",
+  "logExercisePrompt": "Log every exercise to finish today's workout.",
+  "completeWorkout": "Complete workout",
+  
+  "youAreDoneForToday": "You're done for today",
+  "niceworkStreak": "Nice work — {streak}-day streak.",
+  "@niceworkStreak": {
+    "placeholders": {
+      "streak": {
+        "type": "int"
+      }
+    }
+  },
+  "nicework": "Nice work.",
+  "restUpNewWorkoutTomorrow": "Rest up — a new workout waits tomorrow.",
+  
+  "dayStreak": "{count} day streak",
+  "@dayStreak": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "streakFreezesReady": "{count, plural, =1{1 streak freeze ready} other{{count} streak freezes ready}}",
+  "@streakFreezesReady": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "showUpTomorrowToKeepAlive": "Show up tomorrow to keep it alive",
+  "showUpTodayToKeepAlive": "Show up today to keep it alive",
+  
+  "workoutCompleted": "Workout completed",
+  "workoutCompletedMessage": "Nice work. You're on a {streak}-day streak. See you tomorrow.",
+  "@workoutCompletedMessage": {
+    "placeholders": {
+      "streak": {
+        "type": "int"
+      }
+    }
+  },
+  "done": "Done",
+  
+  "coach": "Coach",
+  "coachUnavailable": "Coach is unavailable right now.",
+  "retry": "Retry",
+  
+  "didAndTarget": "Did {completed} · target {target}",
+  "@didAndTarget": {
+    "placeholders": {
+      "completed": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "target": "Target {target}",
+  "@target": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "edit": "Edit",
+  "log": "Log",
+  
+  "targetEnterCompleted": "Target: {target}. Enter what you actually completed.",
+  "@targetEnterCompleted": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "secondsCompleted": "Seconds completed",
+  "repsCompleted": "Reps completed",
+  "enterValidNumber": "Enter a valid number (0 or more).",
+  "maxForExercise": "Max is {max} for this exercise.",
+  "@maxForExercise": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "hitTarget": "Hit target",
+  "save": "Save",
+  
+  "whoIsTraining": "Who's training?",
+  "pickAvatarPrompt": "Pick an avatar and tell us what to call you.",
+  "yourName": "Your name",
+  "nameHint": "Alex",
+  "chooseYourAvatar": "Choose your avatar",
+  
+  "back": "Back",
+  "next": "Next",
+  
+  "stepOfTotal": "Step {current} of {total}",
+  "@stepOfTotal": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "aFewBasics": "A few basics",
+  "aFewBasicsSubtitle": "Helps us scale workouts gently to you.",
+  "age": "Age",
+  "height": "Height",
+  "weight": "Weight",
+  "heightCm": "{value} cm",
+  "@heightCm": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "weightKg": "{value} kg",
+  "@weightKg": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "howActiveAreYou": "How active are you?",
+  "howActiveSubtitle": "We'll start easier than you think — on purpose.",
+  
+  "activityLevelBeginner": "Beginner",
+  "activityLevelBeginnerDesc": "Just getting started",
+  "activityLevelSometimes": "Sometimes active",
+  "activityLevelSometimesDesc": "A few times a month",
+  "activityLevelRegular": "Regularly active",
+  "activityLevelRegularDesc": "Several times a week",
+  
+  "anythingToAvoid": "Anything to avoid?",
+  "anythingToAvoidSubtitle": "Optional. We'll skip exercises that stress these areas.",
+  
+  "injuryKnees": "Knees",
+  "injuryBack": "Back",
+  "injuryShoulders": "Shoulders",
+  "injuryNone": "None",
+  "injuryNoneDesc": "No limitations",
+  "injuryAdaptWorkouts": "Adapt workouts around this",
+  
+  "fitnessCheck": "Fitness check",
+  "fitnessCheckSubtitle": "Instead of guessing what you can do — measure it. Take your time. Good form beats max effort.",
+  "exerciseOfTotal": "Exercise {current} of {total}",
+  "@exerciseOfTotal": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "seconds": "Seconds",
+  "reps": "Reps",
+  "secondsHint": "sec",
+  "repsHint": "reps",
+  "enterValidNumberSimple": "Enter a valid number",
+  "maxForExerciseSimple": "Max is {max} for this exercise",
+  "@maxForExerciseSimple": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "saveAndStart": "Save & start",
+  "nextExercise": "Next exercise",
+  "couldNotSaveAssessment": "Could not save assessment. Please try again.",
+  
+  "progress": "Progress",
+  "progressSubtitle": "Small gains, clearly visible.",
+  "streak": "Streak",
+  "best": "Best",
+  "workouts": "Workouts",
+  "recentWorkouts": "Recent workouts",
+  "completeWorkoutToSeeHistory": "Complete a workout to see your history here.",
+  "exercisesLogged": "{count} exercises logged",
+  "@exercisesLogged": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "achievements": "Achievements",
+  "exerciseTargets": "Exercise targets",
+  "completeAssessmentToStart": "Complete your assessment to start tracking.",
+  "targetValue": "Target {value}",
+  "@targetValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "prValue": "PR {value}",
+  "@prValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "recentPerformanceChart": "Recent performance chart for {name}",
+  "@recentPerformanceChart": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "achievementFirstStepTitle": "First step",
+  "achievementFirstStepDesc": "Complete your first workout",
+  "achievementThreeInRowTitle": "Three in a row",
+  "achievementThreeInRowDesc": "Reach a 3-day streak",
+  "achievementWeekOfMomentumTitle": "Week of momentum",
+  "achievementWeekOfMomentumDesc": "Reach a 7-day streak",
+  "achievementTenSessionsTitle": "Ten sessions",
+  "achievementTenSessionsDesc": "Complete 10 workouts",
+  "achievementSafetyNetTitle": "Safety net",
+  "achievementSafetyNetDesc": "Earn a streak freeze",
+  
+  "exercisePushUps": "Push-ups",
+  "exercisePushUpsCue": "Chest to the floor with control.",
+  "exercisePushUpsHowTo": "Start in a high plank with hands under your shoulders. Lower your chest toward the floor, keeping elbows close to your body, then press back up. Keep your body in a straight line from head to heels.",
+  
+  "exerciseKneePushUps": "Knee push-ups",
+  "exerciseKneePushUpsCue": "Same as push-ups, from the knees.",
+  "exerciseKneePushUpsHowTo": "Kneel on the floor and place your hands under your shoulders. Keep a straight line from knees to head. Lower your chest toward the floor, then press back up with control.",
+  
+  "exerciseChairDips": "Chair dips",
+  "exerciseChairDipsCue": "Lower until elbows are near 90°.",
+  "exerciseChairDipsHowTo": "Sit on the edge of a sturdy chair, hands beside your hips. Slide forward so your hips clear the seat. Bend your elbows to lower your body, then press up. Keep shoulders down and away from your ears.",
+  
+  "exerciseSquats": "Squats",
+  "exerciseSquatsCue": "Sit back, chest up, heels down.",
+  "exerciseSquatsHowTo": "Stand with feet about shoulder-width apart. Sit your hips back as if into a chair, keep your chest lifted, and lower until thighs are roughly parallel to the floor (or as deep as comfortable). Drive through your heels to stand.",
+  
+  "exerciseLunges": "Lunges",
+  "exerciseLungesCue": "Alternate legs. Count every step.",
+  "exerciseLungesHowTo": "Step one foot forward and bend both knees until the back knee nearly touches the floor. Keep your front knee above your ankle. Push back to standing and switch legs. Count total reps across both sides.",
+  
+  "exerciseGluteBridge": "Glute bridge",
+  "exerciseGluteBridgeCue": "Squeeze at the top, then lower.",
+  "exerciseGluteBridgeHowTo": "Lie on your back with knees bent and feet flat on the floor. Press through your heels to lift your hips until your body forms a straight line from shoulders to knees. Squeeze your glutes at the top, then lower slowly.",
+  
+  "exerciseCalfRaises": "Calf raises",
+  "exerciseCalfRaisesCue": "Rise onto your toes, pause, lower.",
+  "exerciseCalfRaisesHowTo": "Stand tall with feet hip-width apart. Rise onto the balls of your feet as high as you can, pause briefly, then lower with control. Hold a wall or chair for balance if needed.",
+  
+  "exercisePlank": "Plank",
+  "exercisePlankCue": "Hold a straight line — no sagging.",
+  "exercisePlankHowTo": "Place forearms on the floor with elbows under shoulders, or hold a high plank on your hands. Keep your body straight from head to heels. Brace your core, squeeze your glutes, and breathe steadily. Stop if your form breaks.",
+  
+  "exerciseSidePlank": "Side plank",
+  "exerciseSidePlankCue": "Log the weaker side's time.",
+  "exerciseSidePlankHowTo": "Lie on one side with your elbow under your shoulder. Lift your hips so your body forms a straight line. Hold, then switch sides. Log the time of your weaker side.",
+  
+  "exerciseDeadBug": "Dead bug",
+  "exerciseDeadBugCue": "Slow moves, back pressed down.",
+  "exerciseDeadBugHowTo": "Lie on your back with arms toward the ceiling and knees bent at 90°. Slowly extend opposite arm and leg toward the floor without letting your lower back arch. Return and switch sides. One rep = both sides once.",
+  
+  "exerciseBirdDog": "Bird dog",
+  "exerciseBirdDogCue": "Opposite arm and leg, then switch.",
+  "exerciseBirdDogHowTo": "Start on all fours with hands under shoulders and knees under hips. Extend one arm forward and the opposite leg back, keeping hips level. Pause, return, then switch. One rep = both sides once.",
+  
+  "exerciseJumpingJacks": "Jumping jacks",
+  "exerciseJumpingJacksCue": "Steady rhythm, soft landings.",
+  "exerciseJumpingJacksHowTo": "Stand with feet together and arms at your sides. Jump your feet out while raising your arms overhead, then jump back to the start. Land softly and keep a steady pace.",
+  
+  "exerciseHighKnees": "High knees",
+  "exerciseHighKneesCue": "Drive knees up, stay light.",
+  "exerciseHighKneesHowTo": "Jog in place while driving your knees up toward hip height. Pump your arms and stay on the balls of your feet. Count each knee drive as one rep.",
+  
+  "exerciseMountainClimbers": "Mountain climbers",
+  "exerciseMountainClimbersCue": "Hips level as you switch legs.",
+  "exerciseMountainClimbersHowTo": "Start in a high plank. Drive one knee toward your chest, then quickly switch legs as if running in place. Keep hips low and level. Count each knee drive as one rep.",
+  
+  "exerciseUnknown": "Unknown exercise",
+  "exerciseUnknownCue": "This exercise is no longer in the catalog.",
+  "exerciseUnknownHowTo": "Skip or re-take your assessment to refresh your plan."
+}
