@@ -6,6 +6,7 @@ import '../data/repositories/momentum_repository.dart';
 import '../domain/models/exercise_level.dart';
 import '../domain/models/user_profile.dart';
 import '../domain/models/workout.dart';
+import 'reminder_provider.dart';
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('SharedPreferences must be overridden in main()');
@@ -60,6 +61,8 @@ class ProfileNotifier extends Notifier<UserProfile?> {
     state = null;
     ref.read(levelsProvider.notifier).refresh();
     ref.read(streakProvider.notifier).refresh();
+    ref.invalidate(todaysWorkoutProvider);
+    ref.invalidate(assessmentResultsProvider);
   }
 }
 
@@ -85,7 +88,16 @@ final streakProvider =
 class StreakNotifier extends Notifier<StreakState> {
   @override
   StreakState build() {
-    return ref.read(momentumRepositoryProvider).getStreak();
+    final repo = ref.read(momentumRepositoryProvider);
+    final stored = repo.readStoredStreak();
+    final evaluated = repo.getStreak();
+    // Persist freeze spend / streak break so it survives the next launch.
+    if (stored.currentStreak != evaluated.currentStreak ||
+        stored.freezeCount != evaluated.freezeCount ||
+        stored.lastCompletedDate != evaluated.lastCompletedDate) {
+      Future.microtask(() => repo.persistStreak(evaluated));
+    }
+    return evaluated;
   }
 
   void set(StreakState streak) => state = streak;
@@ -148,5 +160,7 @@ class TodaysWorkoutNotifier extends AsyncNotifier<DailyWorkout?> {
     state = AsyncData(result.workout);
     ref.read(streakProvider.notifier).set(result.streak);
     ref.read(levelsProvider.notifier).refresh();
+    // Avoid nagging after the workout is already done today.
+    await ref.read(reminderSettingsProvider.notifier).onWorkoutCompleted();
   }
 }

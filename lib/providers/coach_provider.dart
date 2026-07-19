@@ -6,6 +6,7 @@ import '../domain/services/coach_insights.dart';
 import '../domain/services/coach_templates.dart';
 import '../domain/services/streak_service.dart';
 import 'app_providers.dart';
+import 'coach_consent_provider.dart';
 
 final groqCoachClientProvider = Provider<GroqCoachClient>((ref) {
   final client = GroqCoachClient();
@@ -20,6 +21,7 @@ final coachNudgeProvider = FutureProvider<String>((ref) async {
   final workout = ref.watch(todaysWorkoutProvider).asData?.value;
   final levels = ref.watch(levelsProvider);
   final history = ref.watch(workoutHistoryProvider);
+  final aiConsent = ref.watch(coachAiConsentProvider);
 
   if (profile == null) {
     return 'Become a little stronger every day.';
@@ -43,7 +45,7 @@ final coachNudgeProvider = FutureProvider<String>((ref) async {
       '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
 
   final store = ref.read(localAppStoreProvider);
-  final cacheSuffix = '${insights.scenario.name}|$done';
+  final cacheSuffix = '${insights.scenario.name}|$done|ai:$aiConsent';
   final cached = store.readCoachNudge(
     dateKey: '$dateKey|$cacheSuffix',
     workoutDone: done,
@@ -52,7 +54,8 @@ final coachNudgeProvider = FutureProvider<String>((ref) async {
 
   final fallback = CoachTemplates.fromInsights(insights);
 
-  if (!CoachConfig.hasApiKey) {
+  // Network AI requires consent + proxy/key.
+  if (!aiConsent || !CoachConfig.isNetworkEnabled) {
     await store.writeCoachNudge(
       dateKey: '$dateKey|$cacheSuffix',
       workoutDone: done,
@@ -62,7 +65,10 @@ final coachNudgeProvider = FutureProvider<String>((ref) async {
   }
 
   try {
-    final ai = await ref.read(groqCoachClientProvider).generateNudge(insights);
+    final ai = await ref.read(groqCoachClientProvider).generateNudge(
+          insights,
+          includePrivateDetails: false,
+        );
     final text = (ai != null && ai.isNotEmpty) ? ai : fallback;
     await store.writeCoachNudge(
       dateKey: '$dateKey|$cacheSuffix',

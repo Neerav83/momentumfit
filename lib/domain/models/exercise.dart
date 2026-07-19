@@ -199,11 +199,23 @@ abstract final class ExerciseLibrary {
     mountainClimbers,
   ];
 
+  static ExerciseDefinition? tryById(String id) {
+    for (final e in all) {
+      if (e.id == id) return e;
+    }
+    return null;
+  }
+
   static ExerciseDefinition byId(String id) {
-    return all.firstWhere(
-      (e) => e.id == id,
-      orElse: () => pushUps,
-    );
+    return tryById(id) ??
+        ExerciseDefinition(
+          id: id,
+          name: 'Unknown exercise',
+          category: ExerciseCategory.upperBody,
+          unit: ExerciseUnit.reps,
+          cue: 'This exercise is no longer in the catalog.',
+          howTo: 'Skip or re-take your assessment to refresh your plan.',
+        );
   }
 
   static List<ExerciseDefinition> get assessmentExercises =>

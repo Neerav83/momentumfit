@@ -191,25 +191,28 @@ class _StepDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: List.generate(total, (i) {
-        final active = i <= current;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          margin: EdgeInsets.only(right: i == total - 1 ? 0 : 6),
-          height: 4,
-          width: active ? 28 : 12,
-          decoration: BoxDecoration(
-            color: active ? AppColors.forest : AppColors.mist,
-            borderRadius: BorderRadius.circular(99),
-          ),
-        );
-      }),
+    return Semantics(
+      label: 'Step ${current + 1} of $total',
+      child: Row(
+        children: List.generate(total, (i) {
+          final active = i <= current;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            margin: EdgeInsets.only(right: i == total - 1 ? 0 : 6),
+            height: 4,
+            width: active ? 28 : 12,
+            decoration: BoxDecoration(
+              color: active ? AppColors.forest : AppColors.mist,
+              borderRadius: BorderRadius.circular(99),
+            ),
+          );
+        }),
+      ),
     );
   }
 }
 
-class _WelcomePage extends StatelessWidget {
+class _WelcomePage extends StatefulWidget {
   const _WelcomePage({
     required this.name,
     required this.avatar,
@@ -221,6 +224,36 @@ class _WelcomePage extends StatelessWidget {
   final AvatarOption avatar;
   final ValueChanged<String> onNameChanged;
   final ValueChanged<AvatarOption> onAvatarChanged;
+
+  @override
+  State<_WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends State<_WelcomePage> {
+  late final TextEditingController _nameController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.name);
+  }
+
+  @override
+  void didUpdateWidget(covariant _WelcomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.name != _nameController.text) {
+      _nameController.text = widget.name;
+      _nameController.selection = TextSelection.collapsed(
+        offset: widget.name.length,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -237,12 +270,13 @@ class _WelcomePage extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         TextField(
+          controller: _nameController,
           decoration: const InputDecoration(
             labelText: 'Your name',
             hintText: 'Alex',
           ),
           textCapitalization: TextCapitalization.words,
-          onChanged: onNameChanged,
+          onChanged: widget.onNameChanged,
         ),
         const SizedBox(height: 28),
         Text('Choose your avatar', style: theme.textTheme.titleMedium),
@@ -257,8 +291,8 @@ class _WelcomePage extends StatelessWidget {
             for (final option in AvatarOption.values)
               _AvatarTile(
                 option: option,
-                selected: option == avatar,
-                onTap: () => onAvatarChanged(option),
+                selected: option == widget.avatar,
+                onTap: () => widget.onAvatarChanged(option),
               ),
           ],
         ),
@@ -280,31 +314,41 @@ class _AvatarTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.mist : Colors.white,
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: option.label,
+      child: Material(
+        color: selected ? AppColors.mist : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected ? AppColors.forest : AppColors.mist,
-            width: selected ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(option.emoji, style: const TextStyle(fontSize: 28)),
-            const SizedBox(height: 4),
-            Text(
-              option.label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: selected ? AppColors.forestDark : AppColors.muted,
-                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                  ),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: selected ? AppColors.forest : AppColors.mist,
+                width: selected ? 2 : 1,
+              ),
             ),
-          ],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(option.emoji, style: const TextStyle(fontSize: 28)),
+                const SizedBox(height: 4),
+                Text(
+                  option.label,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: selected ? AppColors.forestDark : AppColors.muted,
+                        fontWeight:
+                            selected ? FontWeight.w600 : FontWeight.w500,
+                      ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

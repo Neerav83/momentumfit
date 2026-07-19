@@ -10,14 +10,17 @@ class GroqCoachClient {
       : _http = httpClient ?? http.Client();
 
   final http.Client _http;
-  static final _uri =
-      Uri.parse('https://api.groq.com/openai/v1/chat/completions');
 
-  Future<String?> generateNudge(CoachInsights insights) async {
-    if (!CoachConfig.hasApiKey) return null;
+  Future<String?> generateNudge(
+    CoachInsights insights, {
+    bool includePrivateDetails = false,
+  }) async {
+    if (!CoachConfig.isNetworkEnabled) return null;
 
     final scenario = insights.scenario.name;
-    final facts = insights.factsForPrompt.join('\n');
+    final facts = insights
+        .factsForPrompt(includePrivateDetails: includePrivateDetails)
+        .join('\n');
 
     final userPrompt = '''
 Scenario to address: $scenario
@@ -34,9 +37,63 @@ Rules:
 - If scenario is monthlySummary, include the month stats clearly.
 ''';
 
+    final systemPrompt =
+        'You are MomentumFit\'s personal habit coach. '
+        'Motto: Become a little stronger every day. '
+        'Every message must feel personal and grounded in the user\'s real workout history. '
+        'Never write generic motivational quotes.';
+
+    try {
+      if (CoachConfig.hasProxy) {
+        return _postProxy(
+          systemPrompt: systemPrompt,
+          userPrompt: userPrompt,
+        );
+      }
+      return _postGroqDirect(
+        systemPrompt: systemPrompt,
+        userPrompt: userPrompt,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String?> _postProxy({
+    required String systemPrompt,
+    required String userPrompt,
+  }) async {
+    final uri = Uri.parse(CoachConfig.proxyUrl);
     final response = await _http
         .post(
-          _uri,
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'model': CoachConfig.model,
+            'system': systemPrompt,
+            'user': userPrompt,
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      return null;
+    }
+
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final text = (body['text'] as String?)?.trim();
+    if (text == null || text.isEmpty) return null;
+    return text;
+  }
+
+  Future<String?> _postGroqDirect({
+    required String systemPrompt,
+    required String userPrompt,
+  }) async {
+    final uri = Uri.parse('https://api.groq.com/openai/v1/chat/completions');
+    final response = await _http
+        .post(
+          uri,
           headers: {
             'Authorization': 'Bearer ${CoachConfig.apiKey}',
             'Content-Type': 'application/json',
@@ -46,18 +103,8 @@ Rules:
             'temperature': 0.55,
             'max_tokens': 180,
             'messages': [
-              {
-                'role': 'system',
-                'content':
-                    'You are MomentumFit\'s personal habit coach. '
-                    'Motto: Become a little stronger every day. '
-                    'Every message must feel personal and grounded in the user\'s real workout history. '
-                    'Never write generic motivational quotes.',
-              },
-              {
-                'role': 'user',
-                'content': userPrompt,
-              },
+              {'role': 'system', 'content': systemPrompt},
+              {'role': 'user', 'content': userPrompt},
             ],
           }),
         )

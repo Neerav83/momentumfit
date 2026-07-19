@@ -19,6 +19,7 @@ class LocalStorageKeys {
   static const coachText = 'mf_coach_text';
   static const coachDoneKey = 'mf_coach_done_key';
   static const reminder = 'mf_reminder';
+  static const coachAiConsent = 'mf_coach_ai_consent';
 }
 
 class LocalAppStore {
@@ -54,84 +55,78 @@ class LocalAppStore {
     final alreadyMigrated = _prefs.getBool(LocalStorageKeys.migrated) ?? false;
     if (alreadyMigrated) return;
 
-    // Migrate profile
+    var hadSourceData = false;
+    var allSucceeded = true;
+
+    Future<bool> migrateOne(String? raw, Future<void> Function() write) async {
+      if (raw == null) return true;
+      hadSourceData = true;
+      try {
+        await write();
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
     final profileRaw = _prefs.getString(LocalStorageKeys.profile);
-    if (profileRaw != null) {
-      try {
-        final profile =
-            UserProfile.fromJson(jsonDecode(profileRaw) as Map<String, dynamic>);
-        await _db.saveProfile(profile);
-      } catch (e) {
-        // Migration failed, continue anyway
+    allSucceeded &= await migrateOne(profileRaw, () async {
+      final profile = UserProfile.fromJson(
+        jsonDecode(profileRaw!) as Map<String, dynamic>,
+      );
+      await _db.saveProfile(profile);
+      final roundTrip = await _db.getProfile();
+      if (roundTrip == null) {
+        throw StateError('Profile migration round-trip failed');
       }
-    }
+    });
 
-    // Migrate levels
     final levelsRaw = _prefs.getString(LocalStorageKeys.levels);
-    if (levelsRaw != null) {
-      try {
-        final map = jsonDecode(levelsRaw) as Map<String, dynamic>;
-        final levels = {
-          for (final entry in map.entries)
-            entry.key:
-                ExerciseLevel.fromJson(entry.value as Map<String, dynamic>),
-        };
-        await _db.saveLevels(levels);
-      } catch (e) {
-        // Migration failed, continue anyway
-      }
-    }
+    allSucceeded &= await migrateOne(levelsRaw, () async {
+      final map = jsonDecode(levelsRaw!) as Map<String, dynamic>;
+      final levels = {
+        for (final entry in map.entries)
+          entry.key: ExerciseLevel.fromJson(entry.value as Map<String, dynamic>),
+      };
+      await _db.saveLevels(levels);
+    });
 
-    // Migrate workouts
     final workoutsRaw = _prefs.getString(LocalStorageKeys.workouts);
-    if (workoutsRaw != null) {
-      try {
-        final list = jsonDecode(workoutsRaw) as List<dynamic>;
-        final workouts = [
-          for (final w in list)
-            DailyWorkout.fromJson(w as Map<String, dynamic>),
-        ];
-        await _db.saveWorkouts(workouts);
-      } catch (e) {
-        // Migration failed, continue anyway
-      }
-    }
+    allSucceeded &= await migrateOne(workoutsRaw, () async {
+      final list = jsonDecode(workoutsRaw!) as List<dynamic>;
+      final workouts = [
+        for (final w in list) DailyWorkout.fromJson(w as Map<String, dynamic>),
+      ];
+      await _db.saveWorkouts(workouts);
+    });
 
-    // Migrate streak
     final streakRaw = _prefs.getString(LocalStorageKeys.streak);
-    if (streakRaw != null) {
-      try {
-        final streak =
-            StreakState.fromJson(jsonDecode(streakRaw) as Map<String, dynamic>);
-        await _db.saveStreak(streak);
-      } catch (e) {
-        // Migration failed, continue anyway
-      }
-    }
+    allSucceeded &= await migrateOne(streakRaw, () async {
+      final streak = StreakState.fromJson(
+        jsonDecode(streakRaw!) as Map<String, dynamic>,
+      );
+      await _db.saveStreak(streak);
+    });
 
-    // Migrate assessment
     final assessmentRaw = _prefs.getString(LocalStorageKeys.assessment);
-    if (assessmentRaw != null) {
-      try {
-        final map = jsonDecode(assessmentRaw) as Map<String, dynamic>;
-        final assessment = {
-          for (final e in map.entries) e.key: (e.value as num).toInt(),
-        };
-        await _db.saveAssessment(assessment);
-      } catch (e) {
-        // Migration failed, continue anyway
-      }
+    allSucceeded &= await migrateOne(assessmentRaw, () async {
+      final map = jsonDecode(assessmentRaw!) as Map<String, dynamic>;
+      final assessment = {
+        for (final e in map.entries) e.key: (e.value as num).toInt(),
+      };
+      await _db.saveAssessment(assessment);
+    });
+
+    // Only mark migrated + delete prefs after a successful round-trip.
+    // If there was nothing to migrate, mark migrated so we don't retry forever.
+    if (!hadSourceData || allSucceeded) {
+      await _prefs.setBool(LocalStorageKeys.migrated, true);
+      await _prefs.remove(LocalStorageKeys.profile);
+      await _prefs.remove(LocalStorageKeys.levels);
+      await _prefs.remove(LocalStorageKeys.workouts);
+      await _prefs.remove(LocalStorageKeys.streak);
+      await _prefs.remove(LocalStorageKeys.assessment);
     }
-
-    // Mark as migrated
-    await _prefs.setBool(LocalStorageKeys.migrated, true);
-
-    // Clean up old SharedPreferences data
-    await _prefs.remove(LocalStorageKeys.profile);
-    await _prefs.remove(LocalStorageKeys.levels);
-    await _prefs.remove(LocalStorageKeys.workouts);
-    await _prefs.remove(LocalStorageKeys.streak);
-    await _prefs.remove(LocalStorageKeys.assessment);
   }
 
   Future<void> _loadFromDatabase() async {
@@ -164,6 +159,40 @@ class LocalAppStore {
         workouts.length > 90 ? workouts.sublist(workouts.length - 90) : workouts;
     _workouts = trimmed;
     if (_useDatabase) await _db.saveWorkouts(trimmed);
+  }
+
+  /// Upsert one workout into cache + SQLite without rewriting full history.
+  Future<void> upsertWorkout(DailyWorkout workout) async {
+    final workouts = List<DailyWorkout>.from(_workouts ?? const <DailyWorkout>[]);
+    final index = workouts.indexWhere((w) => w.id == workout.id);
+    if (index >= 0) {
+      workouts[index] = workout;
+    } else {
+      workouts.add(workout);
+    }
+
+    if (workouts.length > 90) {
+      final trimmed = workouts.sublist(workouts.length - 90);
+      final keepIds = trimmed.map((w) => w.id).toSet();
+      final dropped = workouts.where((w) => !keepIds.contains(w.id));
+      _workouts = trimmed;
+      if (_useDatabase) {
+        await _db.upsertWorkout(workout);
+        for (final old in dropped) {
+          // Cascade deletes exercises when FK pragma is on.
+          final db = await _db.database;
+          await db.delete(
+            'daily_workouts',
+            where: 'id = ?',
+            whereArgs: [old.id],
+          );
+        }
+      }
+      return;
+    }
+
+    _workouts = workouts;
+    if (_useDatabase) await _db.upsertWorkout(workout);
   }
 
   StreakState readStreak() => _streak ?? StreakState.empty;
@@ -204,6 +233,13 @@ class LocalAppStore {
     await _prefs.remove(LocalStorageKeys.coachText);
   }
 
+  bool readCoachAiConsent() =>
+      _prefs.getBool(LocalStorageKeys.coachAiConsent) ?? false;
+
+  Future<void> writeCoachAiConsent(bool consented) async {
+    await _prefs.setBool(LocalStorageKeys.coachAiConsent, consented);
+  }
+
   ReminderSettings readReminderSettings() {
     final raw = _prefs.getString(LocalStorageKeys.reminder);
     if (raw == null) return ReminderSettings.defaults;
@@ -231,6 +267,7 @@ class LocalAppStore {
     _assessment = null;
     await clearCoachNudge();
     await _prefs.remove(LocalStorageKeys.reminder);
+    await _prefs.remove(LocalStorageKeys.coachAiConsent);
     if (_useDatabase) await _db.clearAll();
   }
 }

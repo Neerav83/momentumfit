@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_card.dart';
+import '../../core/widgets/app_states.dart';
 import '../../domain/models/avatar.dart';
 import '../../providers/app_providers.dart';
+import '../../providers/coach_consent_provider.dart';
+import '../../providers/coach_provider.dart';
 import '../../providers/reminder_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -15,9 +19,10 @@ class SettingsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final profile = ref.watch(profileProvider);
     final reminder = ref.watch(reminderSettingsProvider);
+    final aiConsent = ref.watch(coachAiConsentProvider);
 
     if (profile == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const LoadingScaffold();
     }
 
     final avatar = AvatarOption.fromId(profile.avatarId);
@@ -29,12 +34,7 @@ class SettingsScreen extends ConsumerWidget {
           children: [
             Text('Settings', style: theme.textTheme.headlineMedium),
             const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
+            AppCard(
               child: Row(
                 children: [
                   Text(avatar.emoji, style: const TextStyle(fontSize: 40)),
@@ -59,12 +59,8 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             Text('Reminders', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
-            Container(
+            AppCard(
               padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
               child: Column(
                 children: [
                   SwitchListTile(
@@ -134,6 +130,35 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
+            Text('AI Coach', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            AppCard(
+              padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+              child: SwitchListTile(
+                contentPadding: const EdgeInsets.only(right: 8),
+                title: Text(
+                  'Personalized AI nudges',
+                  style: theme.textTheme.titleMedium,
+                ),
+                subtitle: Text(
+                  aiConsent
+                      ? 'Workout stats may be sent to the coach service. Name and injuries stay private.'
+                      : 'Uses calm offline tips only — nothing leaves your device.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.muted,
+                  ),
+                ),
+                value: aiConsent,
+                activeThumbColor: AppColors.forest,
+                onChanged: (value) async {
+                  await ref
+                      .read(coachAiConsentProvider.notifier)
+                      .setConsented(value);
+                  ref.invalidate(coachNudgeProvider);
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
             Text('Training', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             _SettingsTile(
@@ -141,6 +166,26 @@ class SettingsScreen extends ConsumerWidget {
               title: 'Retake assessment',
               subtitle: 'Recommended every 4 weeks',
               onTap: () async {
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Retake assessment?'),
+                    content: const Text(
+                      'Your current exercise targets will be recalculated from a new fitness check.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Continue'),
+                      ),
+                    ],
+                  ),
+                );
+                if (ok != true) return;
                 final updated = profile.copyWith(
                   assessmentCompleted: false,
                 );
@@ -177,7 +222,10 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 );
                 if (ok == true) {
+                  await ref.read(reminderSettingsProvider.notifier).clearOnReset();
                   await ref.read(profileProvider.notifier).reset();
+                  ref.read(coachAiConsentProvider.notifier).refresh();
+                  ref.invalidate(coachNudgeProvider);
                 }
               },
             ),
@@ -213,7 +261,7 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = destructive ? const Color(0xFFB91C1C) : AppColors.ink;
+    final color = destructive ? AppColors.danger : AppColors.ink;
 
     return Material(
       color: Colors.white,

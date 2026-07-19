@@ -6,6 +6,8 @@ MomentumFit är inte ännu en träningsapp för maxstyrka.
 
 Målet är att bygga en **daglig vana**. Varje pass ska kännas görbart. Appen anpassar svårigheten så du utmanas — men aldrig överväldigas.
 
+UI-språk: engelska. Denna README är på svenska.
+
 ---
 
 ## Principer
@@ -25,13 +27,13 @@ Målet är att bygga en **daglig vana**. Varje pass ska kännas görbart. Appen 
 |---|---|
 | **Onboarding** | Namn, avatar, ålder/längd/vikt, aktivitetsnivå, skador |
 | **Fitness assessment** | Mäter push-ups, squats och plank i stället för att gissa |
-| **Dagens pass** | 3–5 övningar. Logga faktiskt resultat om du inte når target |
+| **Dagens pass** | 3–5 övningar. Logga faktiskt resultat (kan redigeras) |
 | **Adaptiv svårighet** | Levels per övning som sakta går upp eller ner |
 | **Streak** | Håll vanan vid liv. Streak freezes tjänas in över tid |
-| **Progress** | Levels, personliga rekord och enkel historik |
-| **AI Coach** | Kort daglig nudge via Groq (fallback utan API-nyckel) |
+| **Progress** | Targets, PR, historik och enkla achievements |
+| **AI Coach** | Offline-tips som standard; valfri nätverks-nudge med consent |
 | **Reminders** | Lokala dagliga påminnelser (ställbar tid i Settings) |
-| **Settings** | Notiser, retake assessment, nollställ data |
+| **Settings** | Notiser, AI-consent, retake assessment, nollställ data |
 
 ### Adaptionsregler
 
@@ -50,7 +52,7 @@ Inga stora hopp. Aldrig straff. Konsistens > intensitet.
 - **go_router** — navigation med redirects för onboarding/assessment
 - **SQLite** + SharedPreferences — lokal persistens
 - **google_fonts** — Fraunces + DM Sans
-- **Groq** — valfri AI-coach (free tier)
+- **Groq** — valfri AI-coach via proxy (eller lokal nyckel för dev)
 - **flutter_local_notifications** — lokala påminnelser (ingen Apple Push)
 
 ---
@@ -62,36 +64,34 @@ flutter pub get
 flutter run
 ```
 
-### AI Coach (Groq)
+### AI Coach
 
-1. Skapa API-nyckel på [console.groq.com](https://console.groq.com/)
-2. Kopiera exempel-filen och fyll i nyckeln:
+Appen använder lugna **offline-tips** som standard. Nätverks-AI kräver:
+
+1. Opt-in under **Settings → Personalized AI nudges**
+2. Antingen en **proxy-URL** (rekommenderas för store) eller en lokal Groq-nyckel (endast dev)
+
+#### Store / produktion — proxy
+
+Se [`proxy/README.md`](proxy/README.md). Deploya workern och kör:
+
+```bash
+flutter run --dart-define=COACH_PROXY_URL=https://your-worker.example
+```
+
+Nyckeln ligger då **inte** i app-binären.
+
+#### Lokal utveckling — direkt nyckel
 
 ```bash
 cp local_defines.example.json local_defines.json
-```
-
-Öppna `local_defines.json` och klistra in din nyckel (filen är gitignorerad).
-
-3. Kör med filen:
-
-```bash
+# fyll i GROQ_API_KEY
 flutter run --dart-define-from-file=local_defines.json
 ```
 
-Release:
+**Varning:** `GROQ_API_KEY` via `--dart-define` bäddas in i binären. Använd inte det för store-builds.
 
-```bash
-flutter run --release --dart-define-from-file=local_defines.json
-```
-
-Alternativt utan fil:
-
-```bash
-flutter run --dart-define=GROQ_API_KEY=din_nyckel_här
-```
-
-Utan nyckel visar appen lugna offline-texter istället. Coach-texten cachas en gång per dag.
+Coach-texten cachas en gång per dag + scenario. Namn och skador skickas **inte** till AI som standard.
 
 Kör tester:
 
@@ -108,12 +108,13 @@ Kräver Flutter SDK som matchar `pubspec.yaml` (Dart `^3.12.2`).
 
 ```
 lib/
-  core/           # tema, delad UI-stil
-  domain/         # modeller + adaption/streak-logik
-  data/           # lokal lagring + repository
+  core/           # tema, delade widgets
+  domain/         # modeller + adaption/streak/achievements
+  data/           # lokal lagring + repository + AI-klient
   providers/      # Riverpod
   features/       # onboarding, assessment, home, progress, settings
   routing/        # go_router
+proxy/            # Cloudflare Worker för Groq-nyckel
 ```
 
 Flöde för en ny användare:
@@ -138,13 +139,20 @@ Motto: *Become a little stronger every day.*
 
 ## Framåt
 
-- Notiser / påminnelser
+Klart:
+
+- Lokala notiser / påminnelser
+- Achievements & träningshistorik
+- Groq-proxy + AI-consent
+- Streak-freeze-korrekthet, säkrare SQLite-skrivningar
+
+Senare:
+
 - Apple Health & Google Health Connect
 - Watch-stöd
 - Vänner & månadsutmaningar
-- Achievements & tränings­historik
 - Recovery, sömn/puls
-- Proxy för Groq-nyckel inför store-release
+- Svensk i18n (ARB)
 
 ---
 

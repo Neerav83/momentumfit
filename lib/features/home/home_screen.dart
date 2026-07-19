@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_card.dart';
+import '../../core/widgets/app_states.dart';
 import '../../domain/models/enums.dart';
 import '../../domain/models/exercise.dart';
 import '../../domain/models/workout.dart';
+import '../../domain/services/input_limits.dart';
 import '../../providers/app_providers.dart';
 import '../../providers/coach_provider.dart';
 
@@ -26,14 +29,16 @@ class HomeScreen extends ConsumerWidget {
     final workoutAsync = ref.watch(todaysWorkoutProvider);
 
     if (profile == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const LoadingScaffold();
     }
 
     return Scaffold(
       body: SafeArea(
         child: workoutAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Something went wrong: $e')),
+          error: (_, _) => ErrorState(
+            onRetry: () => ref.invalidate(todaysWorkoutProvider),
+          ),
           data: (workout) {
             final done = workout?.isCompleted ?? false;
 
@@ -48,32 +53,19 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${_greeting()}, ${profile.name}',
-                            style: theme.textTheme.headlineSmall,
-                          ),
-                          Text(
-                            'Become a little stronger every day.',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppColors.muted,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        '${_greeting()}, ${profile.name}',
+                        style: theme.textTheme.headlineSmall,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 _StreakBanner(
                   streak: streak.currentStreak,
                   freezes: streak.freezeCount,
                   workoutDoneToday: done,
                 ),
-                const SizedBox(height: 16),
-                const _CoachNudgeCard(),
                 const SizedBox(height: 28),
                 if (done)
                   _DoneForToday(streak: streak.currentStreak)
@@ -91,7 +83,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 20),
                   if (workout == null)
-                    const Text('No workout yet.')
+                    const EmptyState(message: 'No workout yet.')
                   else ...[
                     for (var i = 0; i < workout.exercises.length; i++)
                       Padding(
@@ -106,6 +98,15 @@ class HomeScreen extends ConsumerWidget {
                           },
                         ),
                       ),
+                    if (!workout.allMarked) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Log every exercise to finish today’s workout.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColors.muted,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     FilledButton(
                       onPressed: workout.allMarked
@@ -123,6 +124,8 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ],
                 ],
+                const SizedBox(height: 20),
+                const _CoachNudgeCard(),
               ],
             );
           },
@@ -136,53 +139,18 @@ class HomeScreen extends ConsumerWidget {
     showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+      builder: (context) => AlertDialog(
+        title: const Text('Workout completed'),
+        content: Text(
+          'Nice work. You’re on a ${streak.currentStreak}-day streak. '
+          'See you tomorrow.',
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                '✅',
-                style: TextStyle(fontSize: 64),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Workout completed!',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.forestDark,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Great job! You\'re on a ${streak.currentStreak} day streak 🔥',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.muted,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'See you tomorrow!',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.forest,
-                      fontWeight: FontWeight.w600,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Done'),
-              ),
-            ],
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Done'),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -197,18 +165,30 @@ class _CoachNudgeCard extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return nudge.when(
-      loading: () => const SizedBox.shrink(),
-      error: (error, stackTrace) => const SizedBox.shrink(),
+      loading: () => const SkeletonBox(height: 88),
+      error: (_, _) => AppCard(
+        borderColor: AppColors.mist,
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Coach is unavailable right now.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.muted,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => ref.invalidate(coachNudgeProvider),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
       data: (text) {
         if (text.isEmpty) return const SizedBox.shrink();
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.mist),
-          ),
+        return AppCard(
+          borderColor: AppColors.mist,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -262,7 +242,7 @@ class _DoneForToday extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFE8F2EC), Color(0xFFF3F0E8)],
+          colors: [AppColors.successBgStart, AppColors.successBgEnd],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -293,7 +273,9 @@ class _DoneForToday extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Nice work!!',
+            streak > 0
+                ? 'Nice work — $streak-day streak.'
+                : 'Nice work.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: AppColors.muted,
             ),
@@ -307,7 +289,6 @@ class _DoneForToday extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-        
         ],
       ),
     );
@@ -337,42 +318,45 @@ class _StreakBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFF7ED), Color(0xFFFEF3C7)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        children: [
-          const Text('🔥', style: TextStyle(fontSize: 28)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$streak day streak',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: AppColors.streak,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                Text(
-                  _subtitle,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.muted,
-                      ),
-                ),
-              ],
-            ),
+    return Semantics(
+      label: '$streak day streak. $_subtitle',
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.streakBgStart, AppColors.streakBgEnd],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.local_fire_department, color: AppColors.streak, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$streak day streak',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: AppColors.streak,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  Text(
+                    _subtitle,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.muted,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -398,7 +382,7 @@ class _ExerciseRow extends StatelessWidget {
       color: item.done ? AppColors.mist : Colors.white,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: !enabled || item.done
+        onTap: !enabled
             ? null
             : () => _showCompleteSheet(context, def, item, onComplete),
         borderRadius: BorderRadius.circular(16),
@@ -438,9 +422,9 @@ class _ExerciseRow extends StatelessWidget {
                   ],
                 ),
               ),
-              if (!item.done && enabled)
+              if (enabled)
                 Text(
-                  'Log',
+                  item.done ? 'Edit' : 'Log',
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: AppColors.forest,
                     fontWeight: FontWeight.w700,
@@ -462,10 +446,6 @@ class _ExerciseRow extends StatelessWidget {
     final result = await showModalBottomSheet<int>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (context) => _LogExerciseSheet(def: def, item: item),
     );
 
@@ -485,17 +465,35 @@ class _LogExerciseSheet extends StatefulWidget {
 
 class _LogExerciseSheetState extends State<_LogExerciseSheet> {
   late final TextEditingController _controller;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: '${widget.item.target}');
+    final initial = widget.item.completed ?? widget.item.target;
+    _controller = TextEditingController(text: '$initial');
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  void _save() {
+    final v = int.tryParse(_controller.text.trim());
+    if (v == null || v < 0) {
+      setState(() => _error = 'Enter a valid number (0 or more).');
+      return;
+    }
+    final max = widget.def.unit == ExerciseUnit.seconds
+        ? InputLimits.maxSeconds
+        : InputLimits.maxReps;
+    if (v > max) {
+      setState(() => _error = 'Max is $max for this exercise.');
+      return;
+    }
+    Navigator.pop(context, v);
   }
 
   @override
@@ -542,7 +540,11 @@ class _LogExerciseSheetState extends State<_LogExerciseSheet> {
                 labelText: def.unit == ExerciseUnit.seconds
                     ? 'Seconds completed'
                     : 'Reps completed',
+                errorText: _error,
               ),
+              onChanged: (_) {
+                if (_error != null) setState(() => _error = null);
+              },
             ),
             const SizedBox(height: 12),
             Row(
@@ -556,11 +558,7 @@ class _LogExerciseSheetState extends State<_LogExerciseSheet> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: FilledButton(
-                    onPressed: () {
-                      final v = int.tryParse(_controller.text.trim());
-                      if (v == null || v < 0) return;
-                      Navigator.pop(context, v);
-                    },
+                    onPressed: _save,
                     child: const Text('Save'),
                   ),
                 ),
