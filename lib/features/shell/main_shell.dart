@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:momentumfit/l10n/app_localizations.dart';
 
 import '../../core/theme/app_theme.dart';
 
@@ -19,6 +20,7 @@ class MainShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final location = GoRouterState.of(context).matchedLocation;
     final index = _indexForLocation(location);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: child,
@@ -34,21 +36,21 @@ class MainShell extends ConsumerWidget {
               context.go('/settings');
           }
         },
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.today_outlined),
-            selectedIcon: Icon(Icons.today, color: AppColors.forest),
-            label: 'Today',
+            icon: const Icon(Icons.today_outlined),
+            selectedIcon: const Icon(Icons.today, color: AppColors.forest),
+            label: l10n.navToday,
           ),
           NavigationDestination(
-            icon: Icon(Icons.insights_outlined),
-            selectedIcon: Icon(Icons.insights, color: AppColors.forest),
-            label: 'Progress',
+            icon: const Icon(Icons.insights_outlined),
+            selectedIcon: const Icon(Icons.insights, color: AppColors.forest),
+            label: l10n.progress,
           ),
           NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings, color: AppColors.forest),
-            label: 'Settings',
+            icon: const Icon(Icons.settings_outlined),
+            selectedIcon: const Icon(Icons.settings, color: AppColors.forest),
+            label: l10n.settings,
           ),
         ],
       ),

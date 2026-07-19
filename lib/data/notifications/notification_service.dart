@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:momentumfit/l10n/app_localizations.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -15,7 +16,6 @@ class NotificationService {
 
   static const _dailyId = 1001;
   static const _channelId = 'momentum_daily';
-  static const _channelName = 'Daily reminders';
 
   bool _initialized = false;
 
@@ -92,6 +92,7 @@ class NotificationService {
   Future<void> syncSchedule(
     ReminderSettings settings, {
     bool skipToday = false,
+    required AppLocalizations l10n,
   }) async {
     await initialize();
     await cancelDaily();
@@ -106,19 +107,19 @@ class NotificationService {
 
     await _plugin.zonedSchedule(
       id: _dailyId,
-      title: 'Your streak is waiting',
-      body: "Today's workout is ready. A few minutes is enough.",
+      title: l10n.reminderNotificationTitle,
+      body: l10n.reminderNotificationBody,
       scheduledDate: when,
-      notificationDetails: const NotificationDetails(
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           _channelId,
-          _channelName,
-          channelDescription: 'Daily MomentumFit workout reminders',
+          l10n.reminderChannelName,
+          channelDescription: l10n.reminderChannelDescription,
           importance: Importance.defaultImportance,
           priority: Priority.defaultPriority,
         ),
-        iOS: DarwinNotificationDetails(),
-        macOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
+        macOS: const DarwinNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:momentumfit/l10n/app_localizations.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
@@ -49,7 +49,7 @@ class SettingsScreen extends ConsumerWidget {
                       children: [
                         Text(profile.name, style: theme.textTheme.titleLarge),
                         Text(
-                          '${profile.activityLevel.label} · ${profile.age} yrs',
+                          '${profile.activityLevel.labelLocalized(context)} · ${l10n.ageYears(profile.age)}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: AppColors.muted,
                           ),
@@ -65,50 +65,48 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             AppCard(
               padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-              child: Column(
-                children: [
-                  RadioListTile<Locale?>(
-                    contentPadding: const EdgeInsets.only(right: 8),
-                    title: Text(
-                      l10n.languageSystemDefault,
-                      style: theme.textTheme.titleMedium,
+              child: RadioGroup<Locale?>(
+                groupValue: currentLocale,
+                onChanged: (value) async {
+                  await ref.read(localeProvider.notifier).setLocale(value);
+                  await ref
+                      .read(reminderSettingsProvider.notifier)
+                      .rescheduleFromDisk();
+                  ref.invalidate(coachNudgeProvider);
+                },
+                child: Column(
+                  children: [
+                    RadioListTile<Locale?>(
+                      contentPadding: const EdgeInsets.only(right: 8),
+                      title: Text(
+                        l10n.languageSystemDefault,
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      value: null,
+                      activeColor: AppColors.forest,
                     ),
-                    value: null,
-                    groupValue: currentLocale,
-                    activeColor: AppColors.forest,
-                    onChanged: (value) {
-                      ref.read(localeProvider.notifier).setLocale(value);
-                    },
-                  ),
-                  const Divider(height: 1),
-                  RadioListTile<Locale?>(
-                    contentPadding: const EdgeInsets.only(right: 8),
-                    title: Text(
-                      l10n.languageEnglish,
-                      style: theme.textTheme.titleMedium,
+                    const Divider(height: 1),
+                    RadioListTile<Locale?>(
+                      contentPadding: const EdgeInsets.only(right: 8),
+                      title: Text(
+                        l10n.languageEnglish,
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      value: const Locale('en'),
+                      activeColor: AppColors.forest,
                     ),
-                    value: const Locale('en'),
-                    groupValue: currentLocale,
-                    activeColor: AppColors.forest,
-                    onChanged: (value) {
-                      ref.read(localeProvider.notifier).setLocale(value);
-                    },
-                  ),
-                  const Divider(height: 1),
-                  RadioListTile<Locale?>(
-                    contentPadding: const EdgeInsets.only(right: 8),
-                    title: Text(
-                      l10n.languageSwedish,
-                      style: theme.textTheme.titleMedium,
+                    const Divider(height: 1),
+                    RadioListTile<Locale?>(
+                      contentPadding: const EdgeInsets.only(right: 8),
+                      title: Text(
+                        l10n.languageSwedish,
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      value: const Locale('sv'),
+                      activeColor: AppColors.forest,
                     ),
-                    value: const Locale('sv'),
-                    groupValue: currentLocale,
-                    activeColor: AppColors.forest,
-                    onChanged: (value) {
-                      ref.read(localeProvider.notifier).setLocale(value);
-                    },
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -233,7 +231,7 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       FilledButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: Text(l10n.continue),
+                        child: Text(l10n.continueAction),
                       ),
                     ],
                   ),
@@ -273,9 +271,13 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 );
                 if (ok == true) {
-                  await ref.read(reminderSettingsProvider.notifier).clearOnReset();
+                  await ref
+                      .read(reminderSettingsProvider.notifier)
+                      .clearOnReset();
                   await ref.read(profileProvider.notifier).reset();
                   ref.read(coachAiConsentProvider.notifier).refresh();
+                  // After profile is cleared, refresh coach on next frame.
+                  await Future<void>.delayed(Duration.zero);
                   ref.invalidate(coachNudgeProvider);
                 }
               },

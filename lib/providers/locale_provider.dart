@@ -5,20 +5,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Manages app locale preference.
 /// - null means follow system locale
 /// - 'en' or 'sv' means user manually chose a language
-class LocaleNotifier extends StateNotifier<Locale?> {
-  LocaleNotifier() : super(null) {
-    _load();
-  }
-
+class LocaleNotifier extends Notifier<Locale?> {
   static const _key = 'app_locale';
+
+  @override
+  Locale? build() {
+    Future.microtask(_load);
+    return null;
+  }
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     final code = prefs.getString(_key);
-    if (code != null && (code == 'en' || code == 'sv')) {
-      state = Locale(code);
-    } else {
-      state = null;
+    if (code == 'en' || code == 'sv') {
+      state = Locale(code!);
     }
   }
 
@@ -33,6 +33,6 @@ class LocaleNotifier extends StateNotifier<Locale?> {
   }
 }
 
-final localeProvider = StateNotifierProvider<LocaleNotifier, Locale?>((ref) {
-  return LocaleNotifier();
-});
+final localeProvider = NotifierProvider<LocaleNotifier, Locale?>(
+  LocaleNotifier.new,
+);

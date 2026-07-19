@@ -9,6 +9,7 @@
   "goodEvening": "Good evening",
   
   "settings": "Settings",
+  "navToday": "Today",
   "reminders": "Reminders",
   "aiCoach": "AI Coach",
   "training": "Training",
@@ -36,7 +37,23 @@
   "retakeAssessmentDialogTitle": "Retake assessment?",
   "retakeAssessmentDialogBody": "Your current exercise targets will be recalculated from a new fitness check.",
   "cancel": "Cancel",
-  "continue": "Continue",
+  "continueAction": "Continue",
+  "ageYears": "{age} yrs",
+  "@ageYears": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "defaultFriendName": "Friend",
+  "somethingWentWrong": "Something went wrong. Please try again.",
+  "tryAgain": "Try again",
+  "notificationsPermissionDenied": "Notifications permission was denied. Enable it in system settings.",
+  "reminderNotificationTitle": "Your streak is waiting",
+  "reminderNotificationBody": "Today's workout is ready. A few minutes is enough.",
+  "reminderChannelName": "Daily reminders",
+  "reminderChannelDescription": "Daily MomentumFit workout reminders",
   
   "resetAllData": "Reset all data",
   "resetAllDataSubtitle": "Clears profile, streaks and history",

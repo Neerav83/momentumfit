@@ -1,9 +1,12 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:momentumfit/l10n/app_localizations.dart';
 
 import '../data/notifications/notification_service.dart';
 import '../domain/models/reminder_settings.dart';
 import '../domain/services/streak_service.dart';
 import 'app_providers.dart';
+import 'locale_provider.dart';
 
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService();
@@ -27,10 +30,20 @@ class ReminderSettingsNotifier extends Notifier<ReminderSettings> {
         );
   }
 
+  AppLocalizations get _l10n {
+    final preferred = ref.read(localeProvider);
+    final code = preferred?.languageCode ??
+        WidgetsBinding.instance.platformDispatcher.locale.languageCode;
+    return lookupAppLocalizations(
+      code == 'sv' ? const Locale('sv') : const Locale('en'),
+    );
+  }
+
   Future<void> _sync(ReminderSettings settings) async {
     await ref.read(notificationServiceProvider).syncSchedule(
           settings,
           skipToday: _workoutDoneToday,
+          l10n: _l10n,
         );
   }
 
@@ -41,7 +54,7 @@ class ReminderSettingsNotifier extends Notifier<ReminderSettings> {
     if (enabled) {
       final granted = await service.requestPermission();
       if (!granted) {
-        return 'Notifications permission was denied. Enable it in system settings.';
+        return _l10n.notificationsPermissionDenied;
       }
     }
 
