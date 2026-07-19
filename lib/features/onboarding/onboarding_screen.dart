@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../domain/models/avatar.dart';
@@ -72,6 +73,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: SafeArea(
@@ -83,14 +85,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'MomentumFit',
+                    l10n.appName,
                     style: theme.textTheme.headlineMedium?.copyWith(
                       color: AppColors.forestDark,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Become a little stronger every day.',
+                    l10n.appTagline,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: AppColors.muted,
                     ),
@@ -154,7 +156,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: Row(
                 children: [
                   if (_page > 0)
-                    Expanded(
+                      Expanded(
                       child: OutlinedButton(
                         onPressed: () {
                           _pageController.previousPage(
@@ -162,7 +164,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             curve: Curves.easeOutCubic,
                           );
                         },
-                        child: const Text('Back'),
+                        child: Text(l10n.back),
                       ),
                     ),
                   if (_page > 0) const SizedBox(width: 12),
@@ -170,7 +172,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     flex: 2,
                     child: FilledButton(
                       onPressed: _canContinue ? _next : null,
-                      child: Text(_page == 3 ? 'Continue' : 'Next'),
+                      child: Text(_page == 3 ? l10n.continue : l10n.next),
                     ),
                   ),
                 ],
@@ -191,8 +193,9 @@ class _StepDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Semantics(
-      label: 'Step ${current + 1} of $total',
+      label: l10n.stepOfTotal(current + 1, total),
       child: Row(
         children: List.generate(total, (i) {
           final active = i <= current;
@@ -279,7 +282,7 @@ class _WelcomePageState extends State<_WelcomePage> {
           onChanged: widget.onNameChanged,
         ),
         const SizedBox(height: 28),
-        Text('Choose your avatar', style: theme.textTheme.titleMedium),
+        Text(l10n.chooseYourAvatar, style: theme.textTheme.titleMedium),
         const SizedBox(height: 12),
         GridView.count(
           crossAxisCount: 4,
@@ -375,19 +378,20 @@ class _BodyPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
       children: [
-        Text('A few basics', style: theme.textTheme.headlineSmall),
+        Text(l10n.aFewBasics, style: theme.textTheme.headlineSmall),
         const SizedBox(height: 8),
         Text(
-          'Helps us scale workouts gently to you.',
+          l10n.aFewBasicsSubtitle,
           style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.muted),
         ),
         const SizedBox(height: 28),
         _SliderRow(
-          label: 'Age',
+          label: l10n.age,
           valueLabel: '$age',
           value: age.toDouble(),
           min: 13,
@@ -396,8 +400,8 @@ class _BodyPage extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         _SliderRow(
-          label: 'Height',
-          valueLabel: '$heightCm cm',
+          label: l10n.height,
+          valueLabel: l10n.heightCm(heightCm),
           value: heightCm.toDouble(),
           min: 140,
           max: 220,
@@ -405,8 +409,8 @@ class _BodyPage extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         _SliderRow(
-          label: 'Weight',
-          valueLabel: '${weightKg.round()} kg',
+          label: l10n.weight,
+          valueLabel: l10n.weightKg(weightKg.round()),
           value: weightKg,
           min: 40,
           max: 160,
