@@ -6,6 +6,7 @@ import '../data/repositories/momentum_repository.dart';
 import '../domain/models/exercise_level.dart';
 import '../domain/models/user_profile.dart';
 import '../domain/models/workout.dart';
+import 'reminder_provider.dart';
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('SharedPreferences must be overridden in main()');
@@ -159,5 +160,7 @@ class TodaysWorkoutNotifier extends AsyncNotifier<DailyWorkout?> {
     state = AsyncData(result.workout);
     ref.read(streakProvider.notifier).set(result.streak);
     ref.read(levelsProvider.notifier).refresh();
+    // Avoid nagging after the workout is already done today.
+    await ref.read(reminderSettingsProvider.notifier).onWorkoutCompleted();
   }
 }

@@ -85,17 +85,30 @@ class NotificationService {
     return true;
   }
 
-  Future<void> syncSchedule(ReminderSettings settings) async {
+  /// Schedules the daily reminder.
+  ///
+  /// When [skipToday] is true (workout already done), the next fire is
+  /// tomorrow even if today's reminder time has not passed yet.
+  Future<void> syncSchedule(
+    ReminderSettings settings, {
+    bool skipToday = false,
+  }) async {
     await initialize();
     await cancelDaily();
 
     if (!settings.enabled) return;
 
+    final when = _nextInstance(
+      settings.hour,
+      settings.minute,
+      skipToday: skipToday,
+    );
+
     await _plugin.zonedSchedule(
       id: _dailyId,
       title: 'Your streak is waiting',
       body: "Today's workout is ready. A few minutes is enough.",
-      scheduledDate: _nextInstance(settings.hour, settings.minute),
+      scheduledDate: when,
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           _channelId,
@@ -114,7 +127,7 @@ class NotificationService {
     if (kDebugMode) {
       debugPrint(
         'Scheduled daily reminder at ${settings.formattedTime} '
-        '(tz=${tz.local.name})',
+        '(next=$when, skipToday=$skipToday, tz=${tz.local.name})',
       );
     }
   }
@@ -123,7 +136,11 @@ class NotificationService {
     await _plugin.cancel(id: _dailyId);
   }
 
-  tz.TZDateTime _nextInstance(int hour, int minute) {
+  tz.TZDateTime _nextInstance(
+    int hour,
+    int minute, {
+    bool skipToday = false,
+  }) {
     final now = tz.TZDateTime.now(tz.local);
     var scheduled = tz.TZDateTime(
       tz.local,
@@ -133,7 +150,7 @@ class NotificationService {
       hour,
       minute,
     );
-    if (!scheduled.isAfter(now)) {
+    if (skipToday || !scheduled.isAfter(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
     return scheduled;
