@@ -253,6 +253,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.0"
+  glassy_blob_nav:
+    dependency: "direct main"
+    description:
+      name: glassy_blob_nav
+      sha256: b18ec4274a47eb7521d832589bd1fc9ee993cecf0147bdda5479a40fadba14ed
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   glob:
     dependency: transitive
     description:

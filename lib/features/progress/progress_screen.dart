@@ -12,6 +12,7 @@ import '../../domain/models/exercise_level.dart';
 import '../../domain/models/workout.dart';
 import '../../domain/services/achievements.dart';
 import '../../providers/app_providers.dart';
+import '../shell/main_shell.dart';
 
 class ProgressScreen extends ConsumerWidget {
   const ProgressScreen({super.key});
@@ -34,9 +35,16 @@ class ProgressScreen extends ConsumerWidget {
       ..sort((a, b) => b.personalBest.compareTo(a.personalBest));
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
+        bottom: false,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+          padding: const EdgeInsets.fromLTRB(
+            24,
+            20,
+            24,
+            MainShell.bottomContentInset,
+          ),
           children: [
             SectionHeader(
               title: l10n.progress,

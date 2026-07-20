@@ -12,6 +12,7 @@ import '../../domain/models/workout.dart';
 import '../../domain/services/input_limits.dart';
 import '../../providers/app_providers.dart';
 import '../../providers/coach_provider.dart';
+import '../shell/main_shell.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -36,7 +37,9 @@ class HomeScreen extends ConsumerWidget {
     }
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
+        bottom: false,
         child: workoutAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (_, _) => ErrorState(
@@ -46,7 +49,12 @@ class HomeScreen extends ConsumerWidget {
             final done = workout?.isCompleted ?? false;
 
             return ListView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+              padding: const EdgeInsets.fromLTRB(
+                24,
+                20,
+                24,
+                MainShell.bottomContentInset,
+              ),
               children: [
                 Row(
                   children: [
