@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:momentumfit/l10n/app_localizations.dart';
 
 import '../theme/app_theme.dart';
 
@@ -16,16 +17,17 @@ class LoadingScaffold extends StatelessWidget {
 class ErrorState extends StatelessWidget {
   const ErrorState({
     super.key,
-    this.message = 'Something went wrong. Please try again.',
+    this.message,
     this.onRetry,
   });
 
-  final String message;
+  final String? message;
   final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -35,13 +37,13 @@ class ErrorState extends StatelessWidget {
             const Icon(Icons.cloud_off_outlined, size: 40, color: AppColors.muted),
             const SizedBox(height: 16),
             Text(
-              message,
+              message ?? l10n.somethingWentWrong,
               style: theme.textTheme.bodyLarge?.copyWith(color: AppColors.muted),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 20),
-              FilledButton(onPressed: onRetry, child: const Text('Try again')),
+              FilledButton(onPressed: onRetry, child: Text(l10n.tryAgain)),
             ],
           ],
         ),

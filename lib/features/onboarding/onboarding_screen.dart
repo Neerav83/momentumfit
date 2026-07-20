@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:momentumfit/l10n/app_localizations.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../domain/models/avatar.dart';
@@ -49,7 +50,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         : _injuries.where((i) => i != Injury.none).toSet();
 
     final profile = UserProfile(
-      name: _name.trim().isEmpty ? 'Friend' : _name.trim(),
+      name: _name.trim().isEmpty
+          ? AppLocalizations.of(context)!.defaultFriendName
+          : _name.trim(),
       avatarId: _avatar.id,
       age: _age,
       heightCm: _heightCm,
@@ -72,6 +75,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: SafeArea(
@@ -83,14 +87,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'MomentumFit',
+                    l10n.appName,
                     style: theme.textTheme.headlineMedium?.copyWith(
                       color: AppColors.forestDark,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Become a little stronger every day.',
+                    l10n.appTagline,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: AppColors.muted,
                     ),
@@ -154,7 +158,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: Row(
                 children: [
                   if (_page > 0)
-                    Expanded(
+                      Expanded(
                       child: OutlinedButton(
                         onPressed: () {
                           _pageController.previousPage(
@@ -162,7 +166,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             curve: Curves.easeOutCubic,
                           );
                         },
-                        child: const Text('Back'),
+                        child: Text(l10n.back),
                       ),
                     ),
                   if (_page > 0) const SizedBox(width: 12),
@@ -170,7 +174,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     flex: 2,
                     child: FilledButton(
                       onPressed: _canContinue ? _next : null,
-                      child: Text(_page == 3 ? 'Continue' : 'Next'),
+                      child: Text(_page == 3 ? l10n.continueAction : l10n.next),
                     ),
                   ),
                 ],
@@ -191,8 +195,9 @@ class _StepDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Semantics(
-      label: 'Step ${current + 1} of $total',
+      label: l10n.stepOfTotal(current + 1, total),
       child: Row(
         children: List.generate(total, (i) {
           final active = i <= current;
@@ -258,28 +263,29 @@ class _WelcomePageState extends State<_WelcomePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
       children: [
-        Text('Who’s training?', style: theme.textTheme.headlineSmall),
+        Text(l10n.whoIsTraining, style: theme.textTheme.headlineSmall),
         const SizedBox(height: 8),
         Text(
-          'Pick an avatar and tell us what to call you.',
+          l10n.pickAvatarPrompt,
           style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.muted),
         ),
         const SizedBox(height: 24),
         TextField(
           controller: _nameController,
-          decoration: const InputDecoration(
-            labelText: 'Your name',
-            hintText: 'Alex',
+          decoration: InputDecoration(
+            labelText: l10n.yourName,
+            hintText: l10n.nameHint,
           ),
           textCapitalization: TextCapitalization.words,
           onChanged: widget.onNameChanged,
         ),
         const SizedBox(height: 28),
-        Text('Choose your avatar', style: theme.textTheme.titleMedium),
+        Text(l10n.chooseYourAvatar, style: theme.textTheme.titleMedium),
         const SizedBox(height: 12),
         GridView.count(
           crossAxisCount: 4,
@@ -375,19 +381,20 @@ class _BodyPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
       children: [
-        Text('A few basics', style: theme.textTheme.headlineSmall),
+        Text(l10n.aFewBasics, style: theme.textTheme.headlineSmall),
         const SizedBox(height: 8),
         Text(
-          'Helps us scale workouts gently to you.',
+          l10n.aFewBasicsSubtitle,
           style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.muted),
         ),
         const SizedBox(height: 28),
         _SliderRow(
-          label: 'Age',
+          label: l10n.age,
           valueLabel: '$age',
           value: age.toDouble(),
           min: 13,
@@ -396,8 +403,8 @@ class _BodyPage extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         _SliderRow(
-          label: 'Height',
-          valueLabel: '$heightCm cm',
+          label: l10n.height,
+          valueLabel: l10n.heightCm(heightCm),
           value: heightCm.toDouble(),
           min: 140,
           max: 220,
@@ -405,8 +412,8 @@ class _BodyPage extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         _SliderRow(
-          label: 'Weight',
-          valueLabel: '${weightKg.round()} kg',
+          label: l10n.weight,
+          valueLabel: l10n.weightKg(weightKg.round()),
           value: weightKg,
           min: 40,
           max: 160,
@@ -476,21 +483,22 @@ class _ActivityPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
       children: [
-        Text('How active are you?', style: theme.textTheme.headlineSmall),
+        Text(l10n.howActiveAreYou, style: theme.textTheme.headlineSmall),
         const SizedBox(height: 8),
         Text(
-          'We’ll start easier than you think — on purpose.',
+          l10n.howActiveSubtitle,
           style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.muted),
         ),
         const SizedBox(height: 24),
         for (final level in ActivityLevel.values) ...[
           _SelectTile(
-            title: level.label,
-            subtitle: level.description,
+            title: level.labelLocalized(context),
+            subtitle: level.descriptionLocalized(context),
             selected: activity == level,
             onTap: () => onChanged(level),
           ),
@@ -513,23 +521,24 @@ class _InjuriesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
       children: [
-        Text('Anything to avoid?', style: theme.textTheme.headlineSmall),
+        Text(l10n.anythingToAvoid, style: theme.textTheme.headlineSmall),
         const SizedBox(height: 8),
         Text(
-          'Optional. We’ll skip exercises that stress these areas.',
+          l10n.anythingToAvoidSubtitle,
           style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.muted),
         ),
         const SizedBox(height: 24),
         for (final injury in Injury.values) ...[
           _SelectTile(
-            title: injury.label,
+            title: injury.labelLocalized(context),
             subtitle: injury == Injury.none
-                ? 'No limitations'
-                : 'Adapt workouts around this',
+                ? l10n.injuryNoneDesc
+                : l10n.injuryAdaptWorkouts,
             selected: selected.contains(injury),
             onTap: () => onToggle(injury),
           ),

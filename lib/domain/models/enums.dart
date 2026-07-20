@@ -1,8 +1,30 @@
+import 'package:flutter/material.dart';
+import 'package:momentumfit/l10n/app_localizations.dart';
+
 enum ActivityLevel {
   beginner,
   sometimes,
   regular;
 
+  String labelLocalized(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return switch (this) {
+      ActivityLevel.beginner => l10n.activityLevelBeginner,
+      ActivityLevel.sometimes => l10n.activityLevelSometimes,
+      ActivityLevel.regular => l10n.activityLevelRegular,
+    };
+  }
+
+  String descriptionLocalized(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return switch (this) {
+      ActivityLevel.beginner => l10n.activityLevelBeginnerDesc,
+      ActivityLevel.sometimes => l10n.activityLevelSometimesDesc,
+      ActivityLevel.regular => l10n.activityLevelRegularDesc,
+    };
+  }
+
+  // Keep non-localized label for serialization/display in non-UI contexts
   String get label => switch (this) {
         ActivityLevel.beginner => 'Beginner',
         ActivityLevel.sometimes => 'Sometimes active',
@@ -35,6 +57,17 @@ enum Injury {
   shoulders,
   none;
 
+  String labelLocalized(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return switch (this) {
+      Injury.knees => l10n.injuryKnees,
+      Injury.back => l10n.injuryBack,
+      Injury.shoulders => l10n.injuryShoulders,
+      Injury.none => l10n.injuryNone,
+    };
+  }
+
+  // Keep non-localized label for serialization/display
   String get label => switch (this) {
         Injury.knees => 'Knees',
         Injury.back => 'Back',

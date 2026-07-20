@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:momentumfit/l10n/app_localizations.dart';
+import 'package:momentumfit/l10n/l10n_extras.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
@@ -17,6 +19,7 @@ class ProgressScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final levels = ref.watch(levelsProvider);
     final streak = ref.watch(streakProvider);
     final history = ref.watch(workoutHistoryProvider);
@@ -35,42 +38,40 @@ class ProgressScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
           children: [
-            const SectionHeader(
-              title: 'Progress',
-              subtitle: 'Small gains, clearly visible.',
+            SectionHeader(
+              title: l10n.progress,
+              subtitle: l10n.progressSubtitle,
             ),
             const SizedBox(height: 24),
             Row(
               children: [
                 Expanded(
                   child: _StatBlock(
-                    label: 'Streak',
+                    label: l10n.streak,
                     value: '${streak.currentStreak}',
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _StatBlock(
-                    label: 'Best',
+                    label: l10n.best,
                     value: '${streak.longestStreak}',
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _StatBlock(
-                    label: 'Workouts',
+                    label: l10n.workouts,
                     value: '${completed.length}',
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 32),
-            Text('Recent workouts', style: theme.textTheme.titleLarge),
+            Text(l10n.recentWorkouts, style: theme.textTheme.titleLarge),
             const SizedBox(height: 12),
             if (completed.isEmpty)
-              const EmptyState(
-                message: 'Complete a workout to see your history here.',
-              )
+              EmptyState(message: l10n.completeWorkoutToSeeHistory)
             else
               for (final workout in completed.take(10))
                 Padding(
@@ -78,7 +79,7 @@ class ProgressScreen extends ConsumerWidget {
                   child: _HistoryRow(workout: workout),
                 ),
             const SizedBox(height: 24),
-            Text('Achievements', style: theme.textTheme.titleLarge),
+            Text(l10n.achievements, style: theme.textTheme.titleLarge),
             const SizedBox(height: 12),
             for (final achievement in achievements)
               Padding(
@@ -86,12 +87,10 @@ class ProgressScreen extends ConsumerWidget {
                 child: _AchievementRow(achievement: achievement),
               ),
             const SizedBox(height: 24),
-            Text('Exercise targets', style: theme.textTheme.titleLarge),
+            Text(l10n.exerciseTargets, style: theme.textTheme.titleLarge),
             const SizedBox(height: 12),
             if (tracked.isEmpty)
-              const EmptyState(
-                message: 'Complete your assessment to start tracking.',
-              )
+              EmptyState(message: l10n.completeAssessmentToStart)
             else
               for (final level in tracked.take(8))
                 Padding(
@@ -145,7 +144,9 @@ class _HistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateLabel = DateFormat.MMMd().format(workout.date);
+    final l10n = AppLocalizations.of(context)!;
+    final dateLabel = DateFormat.MMMd(Localizations.localeOf(context).toString())
+        .format(workout.date);
     final logged = workout.exercises.where((e) => e.done).length;
 
     return AppCard(
@@ -159,7 +160,7 @@ class _HistoryRow extends StatelessWidget {
               children: [
                 Text(dateLabel, style: theme.textTheme.titleMedium),
                 Text(
-                  '$logged exercises logged',
+                  l10n.exercisesLogged(logged),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.muted,
                   ),
@@ -181,6 +182,8 @@ class _AchievementRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final labels = achievementLabels(achievement.id, l10n);
     final unlocked = achievement.unlocked;
 
     return AppCard(
@@ -197,13 +200,13 @@ class _AchievementRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  achievement.title,
+                  labels.title,
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: unlocked ? AppColors.ink : AppColors.muted,
                   ),
                 ),
                 Text(
-                  achievement.description,
+                  labels.description,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.muted,
                   ),
@@ -225,6 +228,8 @@ class _LevelCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final def = ExerciseLibrary.byId(level.exerciseId);
+    final l10n = AppLocalizations.of(context)!;
+    final name = def.nameOf(l10n);
     final points = level.history.length > 8
         ? level.history.sublist(level.history.length - 8)
         : level.history;
@@ -241,12 +246,12 @@ class _LevelCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  def.name,
+                  name,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
               Text(
-                'Target ${def.unit.format(level.currentTarget)}',
+                l10n.targetValue(def.unit.format(level.currentTarget)),
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: AppColors.forest,
                       fontWeight: FontWeight.w700,
@@ -256,14 +261,14 @@ class _LevelCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'PR ${def.unit.format(level.personalBest)}',
+            l10n.prValue(def.unit.format(level.personalBest)),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.muted,
                 ),
           ),
           const SizedBox(height: 14),
           Semantics(
-            label: 'Recent performance chart for ${def.name}',
+            label: l10n.recentPerformanceChart(name),
             child: SizedBox(
               height: 56,
               child: Row(

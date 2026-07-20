@@ -6,7 +6,7 @@ MomentumFit är inte ännu en träningsapp för maxstyrka.
 
 Målet är att bygga en **daglig vana**. Varje pass ska kännas görbart. Appen anpassar svårigheten så du utmanas — men aldrig överväldigas.
 
-UI-språk: engelska. Denna README är på svenska.
+**Språk:** Appen stöder nu både engelska och svenska. Språket följer automatiskt enhetens systeminställningar, men kan ändras manuellt i Settings. Denna README är på svenska.
 
 ---
 
@@ -33,7 +33,7 @@ UI-språk: engelska. Denna README är på svenska.
 | **Progress** | Targets, PR, historik och enkla achievements |
 | **AI Coach** | Offline-tips som standard; valfri nätverks-nudge med consent |
 | **Reminders** | Lokala dagliga påminnelser (ställbar tid i Settings) |
-| **Settings** | Notiser, AI-consent, retake assessment, nollställ data |
+| **Settings** | Notiser, AI-consent, språkväljare, retake assessment, nollställ data |
 
 ### Adaptionsregler
 
@@ -145,6 +145,7 @@ Klart:
 - Achievements & träningshistorik
 - Groq-proxy + AI-consent
 - Streak-freeze-korrekthet, säkrare SQLite-skrivningar
+- **Svensk i18n** — appen stöder svenska och engelska med automatisk språkdetekt
 
 Senare:
 
@@ -152,7 +153,6 @@ Senare:
 - Watch-stöd
 - Vänner & månadsutmaningar
 - Recovery, sömn/puls
-- Svensk i18n (ARB)
 
 ---
 

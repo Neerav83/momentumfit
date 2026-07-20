@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:momentumfit/l10n/app_localizations.dart';
+import 'package:momentumfit/l10n/l10n_extras.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../domain/models/enums.dart';
@@ -45,11 +47,12 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
 
   Future<void> _submitCurrent() async {
     if (_saving) return;
+    final l10n = AppLocalizations.of(context)!;
 
     final value = int.tryParse(_controller.text.trim());
     if (value == null || value < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid number')),
+        SnackBar(content: Text(l10n.enterValidNumberSimple)),
       );
       return;
     }
@@ -59,7 +62,7 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
         : InputLimits.maxReps;
     if (value > max) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Max is $max for this exercise')),
+        SnackBar(content: Text(l10n.maxForExerciseSimple(max))),
       );
       return;
     }
@@ -84,9 +87,7 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not save assessment. Please try again.'),
-        ),
+        SnackBar(content: Text(l10n.couldNotSaveAssessment)),
       );
     }
   }
@@ -94,9 +95,10 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final progress = (_index + 1) / _exercises.length;
     final unitLabel =
-        _current.unit == ExerciseUnit.seconds ? 'Seconds' : 'Reps';
+        _current.unit == ExerciseUnit.seconds ? l10n.seconds : l10n.reps;
 
     return Scaffold(
       body: SafeArea(
@@ -106,15 +108,14 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Fitness check',
+                l10n.fitnessCheck,
                 style: theme.textTheme.headlineMedium?.copyWith(
                   color: AppColors.forestDark,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Instead of guessing what you can do — measure it. '
-                'Take your time. Good form beats max effort.',
+                l10n.fitnessCheckSubtitle,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.muted,
                 ),
@@ -131,9 +132,9 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
               ),
               const SizedBox(height: 8),
               Semantics(
-                label: 'Exercise ${_index + 1} of ${_exercises.length}',
+                label: l10n.exerciseOfTotal(_index + 1, _exercises.length),
                 child: Text(
-                  'Exercise ${_index + 1} of ${_exercises.length}',
+                  l10n.exerciseOfTotal(_index + 1, _exercises.length),
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: AppColors.muted,
                   ),
@@ -146,7 +147,7 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
                     child: Column(
                       children: [
                         Text(
-                          _current.name,
+                          _current.nameOf(l10n),
                           style: theme.textTheme.displaySmall?.copyWith(
                             color: AppColors.ink,
                           ),
@@ -154,7 +155,7 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          _current.howTo,
+                          _current.howToOf(l10n),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: AppColors.muted,
                             height: 1.45,
@@ -172,8 +173,8 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
                             decoration: InputDecoration(
                               labelText: unitLabel,
                               hintText: _current.unit == ExerciseUnit.seconds
-                                  ? 'sec'
-                                  : 'reps',
+                                  ? l10n.secondsHint
+                                  : l10n.repsHint,
                             ),
                             onSubmitted: (_) => _submitCurrent(),
                           ),
@@ -189,7 +190,7 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: _saving ? null : _goBack,
-                        child: const Text('Back'),
+                        child: Text(l10n.back),
                       ),
                     ),
                   if (_index > 0) const SizedBox(width: 12),
@@ -208,8 +209,8 @@ class _AssessmentScreenState extends ConsumerState<AssessmentScreen> {
                             )
                           : Text(
                               _index == _exercises.length - 1
-                                  ? 'Save & start'
-                                  : 'Next exercise',
+                                  ? l10n.saveAndStart
+                                  : l10n.nextExercise,
                             ),
                     ),
                   ),

@@ -58,11 +58,15 @@ class ProfileNotifier extends Notifier<UserProfile?> {
 
   Future<void> reset() async {
     await ref.read(momentumRepositoryProvider).resetAll();
-    state = null;
     ref.read(levelsProvider.notifier).refresh();
     ref.read(streakProvider.notifier).refresh();
-    ref.invalidate(todaysWorkoutProvider);
-    ref.invalidate(assessmentResultsProvider);
+
+    // Defer profile clear so dependents (todaysWorkout watches profile,
+    // GoRouter redirects) don't rebuild mid-notification — same pattern
+    // as completeAssessment. Do not invalidate todaysWorkout here; the
+    // profile watch already rebuilds it to null.
+    await Future<void>.delayed(Duration.zero);
+    state = null;
   }
 }
 

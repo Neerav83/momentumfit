@@ -59,6 +59,9 @@ void main() {
     expect(insights.scenario, CoachScenario.firstWorkout);
     final text = CoachTemplates.fromInsights(insights);
     expect(text.toLowerCase(), contains('first workout'));
+
+    final swedish = CoachTemplates.fromInsights(insights, languageCode: 'sv');
+    expect(swedish.toLowerCase(), contains('första'));
   });
 
   test('seven day streak uses weekStreak scenario', () {

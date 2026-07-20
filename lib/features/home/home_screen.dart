@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:momentumfit/l10n/app_localizations.dart';
+import 'package:momentumfit/l10n/l10n_extras.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
@@ -14,16 +16,17 @@ import '../../providers/coach_provider.dart';
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  String _greeting() {
+  String _greeting(AppLocalizations l10n) {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return l10n.goodMorning;
+    if (hour < 17) return l10n.goodAfternoon;
+    return l10n.goodEvening;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final profile = ref.watch(profileProvider);
     final streak = ref.watch(streakProvider);
     final workoutAsync = ref.watch(todaysWorkoutProvider);
@@ -54,7 +57,7 @@ class HomeScreen extends ConsumerWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        '${_greeting()}, ${profile.name}',
+                        '${_greeting(l10n)}, ${profile.name}',
                         style: theme.textTheme.headlineSmall,
                       ),
                     ),
@@ -71,19 +74,19 @@ class HomeScreen extends ConsumerWidget {
                   _DoneForToday(streak: streak.currentStreak)
                 else ...[
                   Text(
-                    "Today's workout",
+                    l10n.todaysWorkout,
                     style: theme.textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Just a few moves. Keep it easy.',
+                    l10n.todaysWorkoutSubtitle,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: AppColors.muted,
                     ),
                   ),
                   const SizedBox(height: 20),
                   if (workout == null)
-                    const EmptyState(message: 'No workout yet.')
+                    EmptyState(message: l10n.noWorkoutYet)
                   else ...[
                     for (var i = 0; i < workout.exercises.length; i++)
                       Padding(
@@ -101,7 +104,7 @@ class HomeScreen extends ConsumerWidget {
                     if (!workout.allMarked) ...[
                       const SizedBox(height: 4),
                       Text(
-                        'Log every exercise to finish today’s workout.',
+                        l10n.logExercisePrompt,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: AppColors.muted,
                         ),
@@ -120,7 +123,7 @@ class HomeScreen extends ConsumerWidget {
                               }
                             }
                           : null,
-                      child: const Text('Complete workout'),
+                      child: Text(l10n.completeWorkout),
                     ),
                   ],
                 ],
@@ -136,19 +139,19 @@ class HomeScreen extends ConsumerWidget {
 
   void _showCompletionDialog(BuildContext context, WidgetRef ref) {
     final streak = ref.read(streakProvider);
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (context) => AlertDialog(
-        title: const Text('Workout completed'),
+        title: Text(l10n.workoutCompleted),
         content: Text(
-          'Nice work. You’re on a ${streak.currentStreak}-day streak. '
-          'See you tomorrow.',
+          l10n.workoutCompletedMessage(streak.currentStreak),
         ),
         actions: [
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Done'),
+            child: Text(l10n.done),
           ),
         ],
       ),
@@ -163,6 +166,7 @@ class _CoachNudgeCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final nudge = ref.watch(coachNudgeProvider);
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return nudge.when(
       loading: () => const SkeletonBox(height: 88),
@@ -172,7 +176,7 @@ class _CoachNudgeCard extends ConsumerWidget {
           children: [
             Expanded(
               child: Text(
-                'Coach is unavailable right now.',
+                l10n.coachUnavailable,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.muted,
                 ),
@@ -180,7 +184,7 @@ class _CoachNudgeCard extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () => ref.invalidate(coachNudgeProvider),
-              child: const Text('Retry'),
+              child: Text(l10n.retry),
             ),
           ],
         ),
@@ -203,7 +207,7 @@ class _CoachNudgeCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Coach',
+                      l10n.coach,
                       style: theme.textTheme.labelLarge?.copyWith(
                         color: AppColors.forestDark,
                         fontWeight: FontWeight.w700,
@@ -236,6 +240,7 @@ class _DoneForToday extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       width: double.infinity,
@@ -265,7 +270,7 @@ class _DoneForToday extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            "You're done for today",
+            l10n.youAreDoneForToday,
             style: theme.textTheme.headlineSmall?.copyWith(
               color: AppColors.forestDark,
             ),
@@ -273,9 +278,7 @@ class _DoneForToday extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            streak > 0
-                ? 'Nice work — $streak-day streak.'
-                : 'Nice work.',
+            streak > 0 ? l10n.niceworkStreak(streak) : l10n.nicework,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: AppColors.muted,
             ),
@@ -283,7 +286,7 @@ class _DoneForToday extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Rest up — a new workout waits tomorrow.',
+            l10n.restUpNewWorkoutTomorrow,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: AppColors.muted,
             ),
@@ -306,20 +309,18 @@ class _StreakBanner extends StatelessWidget {
   final int freezes;
   final bool workoutDoneToday;
 
-  String get _subtitle {
-    if (freezes > 0) {
-      return '$freezes streak freeze${freezes == 1 ? '' : 's'} ready';
-    }
-    if (workoutDoneToday) {
-      return 'Show up tomorrow to keep it alive';
-    }
-    return 'Show up today to keep it alive';
+  String _subtitle(AppLocalizations l10n) {
+    if (freezes > 0) return l10n.streakFreezesReady(freezes);
+    if (workoutDoneToday) return l10n.showUpTomorrowToKeepAlive;
+    return l10n.showUpTodayToKeepAlive;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final subtitle = _subtitle(l10n);
     return Semantics(
-      label: '$streak day streak. $_subtitle',
+      label: '${l10n.dayStreak(streak)}. $subtitle',
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
@@ -333,21 +334,25 @@ class _StreakBanner extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(Icons.local_fire_department, color: AppColors.streak, size: 28),
+            const Icon(
+              Icons.local_fire_department,
+              color: AppColors.streak,
+              size: 28,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$streak day streak',
+                    l10n.dayStreak(streak),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: AppColors.streak,
                           fontWeight: FontWeight.w700,
                         ),
                   ),
                   Text(
-                    _subtitle,
+                    subtitle,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.muted,
                         ),
@@ -377,6 +382,7 @@ class _ExerciseRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final def = ExerciseLibrary.byId(item.exerciseId);
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Material(
       color: item.done ? AppColors.mist : Colors.white,
@@ -399,12 +405,15 @@ class _ExerciseRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(def.name, style: theme.textTheme.titleMedium),
+                    Text(def.nameOf(l10n), style: theme.textTheme.titleMedium),
                     const SizedBox(height: 2),
                     Text(
                       item.done && item.completed != null
-                          ? 'Did ${def.unit.format(item.completed!)} · target ${def.unit.format(item.target)}'
-                          : def.cue,
+                          ? l10n.didAndTarget(
+                              def.unit.format(item.completed!),
+                              def.unit.format(item.target),
+                            )
+                          : def.cueOf(l10n),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.muted,
                       ),
@@ -413,7 +422,7 @@ class _ExerciseRow extends StatelessWidget {
                     ),
                     if (!item.done)
                       Text(
-                        'Target ${def.unit.format(item.target)}',
+                        l10n.target(def.unit.format(item.target)),
                         style: theme.textTheme.labelMedium?.copyWith(
                           color: AppColors.forest,
                           fontWeight: FontWeight.w600,
@@ -424,7 +433,7 @@ class _ExerciseRow extends StatelessWidget {
               ),
               if (enabled)
                 Text(
-                  item.done ? 'Edit' : 'Log',
+                  item.done ? l10n.edit : l10n.log,
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: AppColors.forest,
                     fontWeight: FontWeight.w700,
@@ -480,17 +489,17 @@ class _LogExerciseSheetState extends State<_LogExerciseSheet> {
     super.dispose();
   }
 
-  void _save() {
+  void _save(AppLocalizations l10n) {
     final v = int.tryParse(_controller.text.trim());
     if (v == null || v < 0) {
-      setState(() => _error = 'Enter a valid number (0 or more).');
+      setState(() => _error = l10n.enterValidNumber);
       return;
     }
     final max = widget.def.unit == ExerciseUnit.seconds
         ? InputLimits.maxSeconds
         : InputLimits.maxReps;
     if (v > max) {
-      setState(() => _error = 'Max is $max for this exercise.');
+      setState(() => _error = l10n.maxForExercise(max));
       return;
     }
     Navigator.pop(context, v);
@@ -500,6 +509,7 @@ class _LogExerciseSheetState extends State<_LogExerciseSheet> {
   Widget build(BuildContext context) {
     final def = widget.def;
     final item = widget.item;
+    final l10n = AppLocalizations.of(context)!;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -513,10 +523,13 @@ class _LogExerciseSheetState extends State<_LogExerciseSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(def.name, style: Theme.of(context).textTheme.headlineSmall),
+            Text(
+              def.nameOf(l10n),
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
             const SizedBox(height: 8),
             Text(
-              def.howTo,
+              def.howToOf(l10n),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.muted,
                     height: 1.45,
@@ -524,8 +537,7 @@ class _LogExerciseSheetState extends State<_LogExerciseSheet> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Target: ${def.unit.format(item.target)}. '
-              'Enter what you actually completed.',
+              l10n.targetEnterCompleted(def.unit.format(item.target)),
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: AppColors.forestDark,
                     fontWeight: FontWeight.w600,
@@ -538,8 +550,8 @@ class _LogExerciseSheetState extends State<_LogExerciseSheet> {
               autofocus: true,
               decoration: InputDecoration(
                 labelText: def.unit == ExerciseUnit.seconds
-                    ? 'Seconds completed'
-                    : 'Reps completed',
+                    ? l10n.secondsCompleted
+                    : l10n.repsCompleted,
                 errorText: _error,
               ),
               onChanged: (_) {
@@ -552,14 +564,14 @@ class _LogExerciseSheetState extends State<_LogExerciseSheet> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context, item.target),
-                    child: const Text('Hit target'),
+                    child: Text(l10n.hitTarget),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: FilledButton(
-                    onPressed: _save,
-                    child: const Text('Save'),
+                    onPressed: () => _save(l10n),
+                    child: Text(l10n.save),
                   ),
                 ),
               ],
