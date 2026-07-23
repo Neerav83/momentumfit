@@ -126,13 +126,21 @@ abstract final class AppTheme {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.mist,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        indicatorColor: AppColors.forest.withValues(alpha: 0.15),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return textTheme.labelMedium?.copyWith(
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
             color: selected ? AppColors.forestDark : AppColors.muted,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            size: 24,
+            color: selected ? AppColors.forest : AppColors.muted,
           );
         }),
       ),

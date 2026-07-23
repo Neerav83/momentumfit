@@ -12,6 +12,7 @@ import '../../providers/coach_consent_provider.dart';
 import '../../providers/coach_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/reminder_provider.dart';
+import '../shell/main_shell.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -32,9 +33,16 @@ class SettingsScreen extends ConsumerWidget {
     final avatar = AvatarOption.fromId(profile.avatarId);
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
+        bottom: false,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+          padding: const EdgeInsets.fromLTRB(
+            24,
+            20,
+            24,
+            MainShell.bottomContentInset,
+          ),
           children: [
             Text(l10n.settings, style: theme.textTheme.headlineMedium),
             const SizedBox(height: 24),
