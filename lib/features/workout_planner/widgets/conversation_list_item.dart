@@ -41,7 +41,7 @@ class ConversationListItem extends StatelessWidget {
 
     return Material(
       color: isSelected
-          ? theme.colorScheme.primaryContainer.withOpacity(0.3)
+          ? theme.colorScheme.primaryContainer.withValues(alpha: 0.3)
           : Colors.transparent,
       child: InkWell(
         onTap: onTap,

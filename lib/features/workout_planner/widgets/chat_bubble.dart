@@ -83,7 +83,7 @@ class ChatBubble extends StatelessWidget {
                     child: Text(
                       DateFormat.Hm().format(message.timestamp),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
                     ),
                   ),
