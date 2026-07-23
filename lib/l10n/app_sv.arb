@@ -12,9 +12,13 @@
   "navToday": "Idag",
   "reminders": "Påminnelser",
   "aiCoach": "AI-Coach",
+  "tools": "Verktyg",
   "training": "Träning",
   "dangerZone": "Farlig zon",
   "language": "Språk",
+  
+  "workoutPlanner": "Träningsplanerare",
+  "workoutPlannerSubtitle": "Diskutera och planera träningsprogram med AI",
   
   "dailyReminder": "Daglig påminnelse",
   "dailyReminderDescription": "Få en påminnelse så du inte missar en dag",

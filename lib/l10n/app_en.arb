@@ -12,9 +12,13 @@
   "navToday": "Today",
   "reminders": "Reminders",
   "aiCoach": "AI Coach",
+  "tools": "Tools",
   "training": "Training",
   "dangerZone": "Danger zone",
   "language": "Language",
+  
+  "workoutPlanner": "Workout Planner",
+  "workoutPlannerSubtitle": "Discuss and plan workout programs with AI",
   
   "dailyReminder": "Daily reminder",
   "dailyReminderDescription": "Get a nudge so you don't miss a day",

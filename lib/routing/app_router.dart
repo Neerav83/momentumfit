@@ -8,6 +8,7 @@ import '../features/onboarding/onboarding_screen.dart';
 import '../features/progress/progress_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/shell/main_shell.dart';
+import '../features/workout_planner/workout_planner_screen.dart';
 import '../providers/app_providers.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -49,6 +50,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/assessment',
         builder: (context, state) => const AssessmentScreen(),
+      ),
+      GoRoute(
+        path: '/workout-planner',
+        builder: (context, state) => const WorkoutPlannerScreen(),
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,

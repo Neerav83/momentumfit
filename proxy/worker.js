@@ -75,18 +75,43 @@ export default {
       );
     }
 
-    const system = typeof body.system === 'string' ? body.system : '';
-    const user = typeof body.user === 'string' ? body.user : '';
     const model =
       typeof body.model === 'string' && body.model.length > 0
         ? body.model
         : 'llama-3.1-8b-instant';
 
-    if (!system || !user || user.length > 8000 || system.length > 4000) {
-      return Response.json(
-        { error: 'Invalid prompt' },
-        { status: 400, headers: corsHeaders() },
-      );
+    let messages;
+    let temperature = 0.55;
+    let maxTokens = 180;
+
+    // Support both old format (system + user) and new format (messages array)
+    if (Array.isArray(body.messages)) {
+      messages = body.messages;
+      temperature = typeof body.temperature === 'number' ? body.temperature : 0.7;
+      maxTokens = typeof body.max_tokens === 'number' ? body.max_tokens : 1500;
+      
+      if (messages.length === 0 || messages.length > 50) {
+        return Response.json(
+          { error: 'Invalid messages array' },
+          { status: 400, headers: corsHeaders() },
+        );
+      }
+    } else {
+      // Legacy format for backward compatibility
+      const system = typeof body.system === 'string' ? body.system : '';
+      const user = typeof body.user === 'string' ? body.user : '';
+
+      if (!system || !user || user.length > 8000 || system.length > 4000) {
+        return Response.json(
+          { error: 'Invalid prompt' },
+          { status: 400, headers: corsHeaders() },
+        );
+      }
+
+      messages = [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ];
     }
 
     const upstream = await fetch(GROQ_URL, {
@@ -97,12 +122,9 @@ export default {
       },
       body: JSON.stringify({
         model,
-        temperature: 0.55,
-        max_tokens: 180,
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: user },
-        ],
+        temperature,
+        max_tokens: maxTokens,
+        messages,
       }),
     });
 

@@ -220,6 +220,15 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
+            Text(l10n.tools, style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            _SettingsTile(
+              icon: Icons.psychology_outlined,
+              title: l10n.workoutPlanner,
+              subtitle: l10n.workoutPlannerSubtitle,
+              onTap: () => context.push('/workout-planner'),
+            ),
+            const SizedBox(height: 24),
             Text(l10n.training, style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             _SettingsTile(

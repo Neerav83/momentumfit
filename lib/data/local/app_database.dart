@@ -3,9 +3,11 @@ import 'dart:convert';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../../domain/models/chat_message.dart';
 import '../../domain/models/exercise_level.dart';
 import '../../domain/models/user_profile.dart';
 import '../../domain/models/workout.dart';
+import '../../domain/models/workout_conversation.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -25,7 +27,7 @@ class AppDatabase {
 
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -103,11 +105,35 @@ class AppDatabase {
       )
     ''');
 
+    await db.execute('''
+      CREATE TABLE workout_conversations (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        is_archived INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE chat_messages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        timestamp TEXT NOT NULL,
+        FOREIGN KEY (conversation_id) REFERENCES workout_conversations (id) ON DELETE CASCADE
+      )
+    ''');
+
     await db.execute(
       'CREATE INDEX idx_workout_exercises_workout_id ON workout_exercises(workout_id)',
     );
     await db.execute(
       'CREATE INDEX idx_daily_workouts_date ON daily_workouts(date)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_chat_messages_conversation_id ON chat_messages(conversation_id)',
     );
   }
 
@@ -122,6 +148,33 @@ class AppDatabase {
       await db.execute('DROP TABLE IF EXISTS streak_state');
       await db.execute('DROP TABLE IF EXISTS assessment_results');
       await _onCreate(db, newVersion);
+    }
+    
+    if (oldVersion < 3) {
+      await db.execute('''
+        CREATE TABLE workout_conversations (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          is_archived INTEGER NOT NULL DEFAULT 0
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE chat_messages (
+          id TEXT PRIMARY KEY,
+          conversation_id TEXT NOT NULL,
+          role TEXT NOT NULL,
+          content TEXT NOT NULL,
+          timestamp TEXT NOT NULL,
+          FOREIGN KEY (conversation_id) REFERENCES workout_conversations (id) ON DELETE CASCADE
+        )
+      ''');
+
+      await db.execute(
+        'CREATE INDEX idx_chat_messages_conversation_id ON chat_messages(conversation_id)',
+      );
     }
   }
 
@@ -441,6 +494,74 @@ class AppDatabase {
     await batch.commit(noResult: true);
   }
 
+  Future<List<WorkoutConversation>> getConversations() async {
+    final db = await database;
+    final maps = await db.query(
+      'workout_conversations',
+      where: 'is_archived = ?',
+      whereArgs: [0],
+      orderBy: 'updated_at DESC',
+    );
+    
+    return [
+      for (final map in maps) WorkoutConversation.fromMap(map),
+    ];
+  }
+
+  Future<WorkoutConversation?> getConversation(String id) async {
+    final db = await database;
+    final maps = await db.query(
+      'workout_conversations',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    
+    if (maps.isEmpty) return null;
+    return WorkoutConversation.fromMap(maps.first);
+  }
+
+  Future<void> saveConversation(WorkoutConversation conversation) async {
+    final db = await database;
+    await db.insert(
+      'workout_conversations',
+      conversation.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> deleteConversation(String id) async {
+    final db = await database;
+    await db.delete(
+      'workout_conversations',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<ChatMessage>> getMessages(String conversationId) async {
+    final db = await database;
+    final maps = await db.query(
+      'chat_messages',
+      where: 'conversation_id = ?',
+      whereArgs: [conversationId],
+      orderBy: 'timestamp ASC',
+    );
+    
+    return [
+      for (final map in maps) ChatMessage.fromMap(map),
+    ];
+  }
+
+  Future<void> saveMessage(ChatMessage message) async {
+    final db = await database;
+    await db.insert(
+      'chat_messages',
+      message.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   Future<void> clearAll() async {
     final db = await database;
     final batch = db.batch();
@@ -451,6 +572,8 @@ class AppDatabase {
     batch.delete('daily_workouts');
     batch.delete('streak_state');
     batch.delete('assessment_results');
+    batch.delete('chat_messages');
+    batch.delete('workout_conversations');
 
     await batch.commit(noResult: true);
   }
