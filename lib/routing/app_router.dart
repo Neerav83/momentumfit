@@ -7,6 +7,7 @@ import '../features/home/home_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/progress/progress_screen.dart';
 import '../features/settings/settings_screen.dart';
+import '../features/settings/workout_plans_screen.dart';
 import '../features/shell/main_shell.dart';
 import '../features/workout_planner/workout_planner_screen.dart';
 import '../providers/app_providers.dart';
@@ -54,6 +55,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/workout-planner',
         builder: (context, state) => const WorkoutPlannerScreen(),
+      ),
+      GoRoute(
+        path: '/workout-plans',
+        builder: (context, state) => const WorkoutPlansScreen(),
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,

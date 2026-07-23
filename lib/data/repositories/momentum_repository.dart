@@ -1,5 +1,6 @@
 import 'package:uuid/uuid.dart';
 
+import '../../domain/models/custom_workout_plan.dart';
 import '../../domain/models/enums.dart';
 import '../../domain/models/exercise.dart';
 import '../../domain/models/exercise_level.dart';
@@ -8,6 +9,7 @@ import '../../domain/models/workout.dart';
 import '../../domain/services/adaptive_difficulty.dart';
 import '../../domain/services/input_limits.dart';
 import '../../domain/services/streak_service.dart';
+import '../local/app_database.dart';
 import '../local/local_app_store.dart';
 
 class MomentumRepository {
@@ -79,16 +81,63 @@ class MomentumRepository {
     );
     if (existingIndex >= 0) return workouts[existingIndex];
 
-    final levels = _store.readLevels();
-    final workout = AdaptiveDifficulty.buildDailyWorkout(
-      id: _uuid.v4(),
-      date: today,
-      profile: profile,
-      levels: levels,
-      dayIndex: workouts.length,
-    );
+    final db = AppDatabase.instance;
+    final activePlan = await db.getActivePlan();
+
+    final DailyWorkout workout;
+    if (activePlan != null) {
+      workout = _buildWorkoutFromCustomPlan(
+        id: _uuid.v4(),
+        date: today,
+        plan: activePlan,
+      );
+    } else {
+      final levels = _store.readLevels();
+      workout = AdaptiveDifficulty.buildDailyWorkout(
+        id: _uuid.v4(),
+        date: today,
+        profile: profile,
+        levels: levels,
+        dayIndex: workouts.length,
+      );
+    }
+    
     await _store.upsertWorkout(workout);
     return workout;
+  }
+
+  DailyWorkout _buildWorkoutFromCustomPlan({
+    required String id,
+    required DateTime date,
+    required CustomWorkoutPlan plan,
+  }) {
+    final dayOfWeek = date.weekday;
+    
+    final dayWorkout = plan.weeklySchedule.firstWhere(
+      (d) => d.dayOfWeek == dayOfWeek,
+      orElse: () => plan.weeklySchedule.first,
+    );
+
+    if (dayWorkout.isRestDay) {
+      return DailyWorkout(
+        id: id,
+        date: date,
+        exercises: const [],
+      );
+    }
+
+    final exercises = dayWorkout.exercises.map((planned) {
+      return WorkoutExercise(
+        exerciseId: planned.exerciseId,
+        target: planned.targetReps,
+      );
+    }).toList();
+
+    return DailyWorkout(
+      id: id,
+      date: date,
+      exercises: exercises,
+    );
   }
 
   Future<DailyWorkout> updateExerciseProgress({

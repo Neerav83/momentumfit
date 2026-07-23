@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../data/ai/plan_generator_client.dart';
 import '../data/ai/workout_planner_client.dart';
 import '../data/local/app_database.dart';
 import '../domain/models/chat_message.dart';
+import '../domain/models/custom_workout_plan.dart';
 import '../domain/models/workout_conversation.dart';
 import 'app_providers.dart';
 import 'locale_provider.dart';
@@ -35,12 +37,13 @@ class WorkoutPlannerState {
 }
 
 class WorkoutPlannerNotifier extends StateNotifier<WorkoutPlannerState> {
-  WorkoutPlannerNotifier(this._client, this._ref)
+  WorkoutPlannerNotifier(this._client, this._planGenerator, this._ref)
       : super(const WorkoutPlannerState()) {
     _loadConversations();
   }
 
   final WorkoutPlannerClient _client;
+  final PlanGeneratorClient _planGenerator;
   final Ref _ref;
 
   Future<void> _loadConversations() async {
@@ -119,6 +122,26 @@ class WorkoutPlannerNotifier extends StateNotifier<WorkoutPlannerState> {
       clearCurrentMessages();
     }
   }
+
+  Future<CustomWorkoutPlan?> generatePlanFromConversation(
+    String conversationId,
+  ) async {
+    final profile = _ref.read(profileProvider);
+    final locale = _ref.read(localeProvider);
+    final languageCode = locale?.languageCode ?? 'sv';
+
+    return _planGenerator.generatePlanFromConversation(
+      conversationId: conversationId,
+      conversationHistory: state.currentMessages,
+      userProfile: profile,
+      languageCode: languageCode,
+    );
+  }
+
+  Future<void> savePlan(CustomWorkoutPlan plan) async {
+    final db = AppDatabase.instance;
+    await db.saveCustomPlan(plan);
+  }
 }
 
 final workoutPlannerClientProvider = Provider<WorkoutPlannerClient>((ref) {
@@ -127,8 +150,15 @@ final workoutPlannerClientProvider = Provider<WorkoutPlannerClient>((ref) {
   return client;
 });
 
+final planGeneratorClientProvider = Provider<PlanGeneratorClient>((ref) {
+  final client = PlanGeneratorClient();
+  ref.onDispose(client.dispose);
+  return client;
+});
+
 final workoutPlannerProvider =
     StateNotifierProvider<WorkoutPlannerNotifier, WorkoutPlannerState>((ref) {
   final client = ref.watch(workoutPlannerClientProvider);
-  return WorkoutPlannerNotifier(client, ref);
+  final planGenerator = ref.watch(planGeneratorClientProvider);
+  return WorkoutPlannerNotifier(client, planGenerator, ref);
 });

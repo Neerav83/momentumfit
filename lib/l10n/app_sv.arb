@@ -19,6 +19,8 @@
   
   "workoutPlanner": "Träningsplanerare",
   "workoutPlannerSubtitle": "Diskutera och planera träningsprogram med AI",
+  "workoutPlans": "Mina träningsplaner",
+  "workoutPlansSubtitle": "Hantera och aktivera dina sparade planer",
   
   "dailyReminder": "Daglig påminnelse",
   "dailyReminderDescription": "Få en påminnelse så du inte missar en dag",

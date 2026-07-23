@@ -113,6 +113,131 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
     }
   }
 
+  Future<void> _generatePlanFromConversation(WorkoutPlannerState state) async {
+    if (_selectedConversationId == null || state.currentMessages.isEmpty) {
+      return;
+    }
+
+    final theme = Theme.of(context);
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: theme.colorScheme.primary),
+            const SizedBox(height: 16),
+            const Text('Skapar träningsplan från konversationen...'),
+          ],
+        ),
+      ),
+    );
+
+    final plan = await ref
+        .read(workoutPlannerProvider.notifier)
+        .generatePlanFromConversation(_selectedConversationId!);
+
+    if (!mounted) return;
+    Navigator.of(context).pop();
+
+    if (plan == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Kunde inte skapa träningsplan. Försök igen.'),
+        ),
+      );
+      return;
+    }
+
+    final shouldActivate = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(plan.name),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (plan.description != null) ...[
+              Text(plan.description!),
+              const SizedBox(height: 16),
+            ],
+            Text(
+              'Veckoschema:',
+              style: theme.textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            ...plan.weeklySchedule.map((day) {
+              final dayName = _getDayName(day.dayOfWeek);
+              final exerciseCount = day.exercises.length;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  day.isRestDay
+                      ? '$dayName: Vilodag'
+                      : '$dayName: $exerciseCount övningar',
+                  style: theme.textTheme.bodySmall,
+                ),
+              );
+            }),
+            const SizedBox(height: 16),
+            const Text('Vill du aktivera denna träningsplan?'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Spara utan att aktivera'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Aktivera'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldActivate != null) {
+      await ref
+          .read(workoutPlannerProvider.notifier)
+          .savePlan(plan.copyWith(isActive: shouldActivate));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              shouldActivate
+                  ? 'Träningsplan aktiverad!'
+                  : 'Träningsplan sparad',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  String _getDayName(int dayOfWeek) {
+    switch (dayOfWeek) {
+      case 1:
+        return 'Måndag';
+      case 2:
+        return 'Tisdag';
+      case 3:
+        return 'Onsdag';
+      case 4:
+        return 'Torsdag';
+      case 5:
+        return 'Fredag';
+      case 6:
+        return 'Lördag';
+      case 7:
+        return 'Söndag';
+      default:
+        return 'Dag $dayOfWeek';
+    }
+  }
+
   Future<void> _deleteConversation(String id) async {
     await ref.read(workoutPlannerProvider.notifier).deleteConversation(id);
     if (id == _selectedConversationId) {
@@ -134,6 +259,12 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
               : _getConversationTitle(state.conversations, _selectedConversationId) ?? 'Träningsplan',
         ),
         actions: [
+          if (_selectedConversationId != null && state.currentMessages.length >= 4)
+            IconButton(
+              icon: const Icon(Icons.save_alt),
+              onPressed: () => _generatePlanFromConversation(state),
+              tooltip: 'Skapa träningsplan',
+            ),
           if (_selectedConversationId != null)
             IconButton(
               icon: const Icon(Icons.add),

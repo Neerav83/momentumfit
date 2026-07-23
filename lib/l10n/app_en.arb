@@ -19,6 +19,8 @@
   
   "workoutPlanner": "Workout Planner",
   "workoutPlannerSubtitle": "Discuss and plan workout programs with AI",
+  "workoutPlans": "My Workout Plans",
+  "workoutPlansSubtitle": "Manage and activate your saved plans",
   
   "dailyReminder": "Daily reminder",
   "dailyReminderDescription": "Get a nudge so you don't miss a day",

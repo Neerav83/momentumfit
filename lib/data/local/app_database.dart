@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../../domain/models/chat_message.dart';
+import '../../domain/models/custom_workout_plan.dart';
 import '../../domain/models/exercise_level.dart';
 import '../../domain/models/user_profile.dart';
 import '../../domain/models/workout.dart';
@@ -27,7 +28,7 @@ class AppDatabase {
 
     return openDatabase(
       path,
-      version: 3,
+      version: 4,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -126,6 +127,19 @@ class AppDatabase {
       )
     ''');
 
+    await db.execute('''
+      CREATE TABLE custom_workout_plans (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        weekly_schedule TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        conversation_id TEXT,
+        is_active INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (conversation_id) REFERENCES workout_conversations (id) ON DELETE SET NULL
+      )
+    ''');
+
     await db.execute(
       'CREATE INDEX idx_workout_exercises_workout_id ON workout_exercises(workout_id)',
     );
@@ -134,6 +148,9 @@ class AppDatabase {
     );
     await db.execute(
       'CREATE INDEX idx_chat_messages_conversation_id ON chat_messages(conversation_id)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_custom_workout_plans_active ON custom_workout_plans(is_active)',
     );
   }
 
@@ -174,6 +191,25 @@ class AppDatabase {
 
       await db.execute(
         'CREATE INDEX idx_chat_messages_conversation_id ON chat_messages(conversation_id)',
+      );
+    }
+
+    if (oldVersion < 4) {
+      await db.execute('''
+        CREATE TABLE custom_workout_plans (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          weekly_schedule TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          conversation_id TEXT,
+          is_active INTEGER NOT NULL DEFAULT 0,
+          FOREIGN KEY (conversation_id) REFERENCES workout_conversations (id) ON DELETE SET NULL
+        )
+      ''');
+
+      await db.execute(
+        'CREATE INDEX idx_custom_workout_plans_active ON custom_workout_plans(is_active)',
       );
     }
   }
@@ -562,6 +598,79 @@ class AppDatabase {
     );
   }
 
+  Future<List<CustomWorkoutPlan>> getCustomPlans() async {
+    final db = await database;
+    final maps = await db.query(
+      'custom_workout_plans',
+      orderBy: 'created_at DESC',
+    );
+    
+    return [
+      for (final map in maps) CustomWorkoutPlan.fromMap(map),
+    ];
+  }
+
+  Future<CustomWorkoutPlan?> getActivePlan() async {
+    final db = await database;
+    final maps = await db.query(
+      'custom_workout_plans',
+      where: 'is_active = ?',
+      whereArgs: [1],
+      limit: 1,
+    );
+    
+    if (maps.isEmpty) return null;
+    return CustomWorkoutPlan.fromMap(maps.first);
+  }
+
+  Future<void> saveCustomPlan(CustomWorkoutPlan plan) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      if (plan.isActive) {
+        await txn.update(
+          'custom_workout_plans',
+          {'is_active': 0},
+          where: 'is_active = ?',
+          whereArgs: [1],
+        );
+      }
+
+      await txn.insert(
+        'custom_workout_plans',
+        plan.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    });
+  }
+
+  Future<void> setActivePlan(String? planId) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.update(
+        'custom_workout_plans',
+        {'is_active': 0},
+      );
+
+      if (planId != null) {
+        await txn.update(
+          'custom_workout_plans',
+          {'is_active': 1},
+          where: 'id = ?',
+          whereArgs: [planId],
+        );
+      }
+    });
+  }
+
+  Future<void> deleteCustomPlan(String id) async {
+    final db = await database;
+    await db.delete(
+      'custom_workout_plans',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future<void> clearAll() async {
     final db = await database;
     final batch = db.batch();
@@ -574,6 +683,7 @@ class AppDatabase {
     batch.delete('assessment_results');
     batch.delete('chat_messages');
     batch.delete('workout_conversations');
+    batch.delete('custom_workout_plans');
 
     await batch.commit(noResult: true);
   }
