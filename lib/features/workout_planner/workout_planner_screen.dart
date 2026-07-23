@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../core/widgets/app_states.dart';
 import '../../domain/models/chat_message.dart';
 import '../../domain/models/workout_conversation.dart';
 import '../../providers/workout_planner_provider.dart';
@@ -315,13 +314,13 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
               Icon(
                 Icons.fitness_center,
                 size: 64,
-                color: theme.colorScheme.primary.withOpacity(0.3),
+                color: theme.colorScheme.primary.withValues(alpha: 0.3),
               ),
               const SizedBox(height: 16),
               Text(
                 'Ingen träningsplan ännu',
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -329,7 +328,7 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
               Text(
                 'Börja diskutera din träningsplan med AI-coachen',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -397,13 +396,13 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
             Icon(
               Icons.chat_bubble_outline,
               size: 64,
-              color: theme.colorScheme.primary.withOpacity(0.3),
+              color: theme.colorScheme.primary.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(
               'Börja konversationen',
               style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
               textAlign: TextAlign.center,
             ),
@@ -411,7 +410,7 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
             Text(
               'Berätta om dina träningsmål, begränsningar och preferenser',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
               textAlign: TextAlign.center,
             ),

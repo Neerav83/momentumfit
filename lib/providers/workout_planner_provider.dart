@@ -36,15 +36,17 @@ class WorkoutPlannerState {
   }
 }
 
-class WorkoutPlannerNotifier extends StateNotifier<WorkoutPlannerState> {
-  WorkoutPlannerNotifier(this._client, this._planGenerator, this._ref)
-      : super(const WorkoutPlannerState()) {
-    _loadConversations();
-  }
+class WorkoutPlannerNotifier extends Notifier<WorkoutPlannerState> {
+  late final WorkoutPlannerClient _client;
+  late final PlanGeneratorClient _planGenerator;
 
-  final WorkoutPlannerClient _client;
-  final PlanGeneratorClient _planGenerator;
-  final Ref _ref;
+  @override
+  WorkoutPlannerState build() {
+    _client = ref.watch(workoutPlannerClientProvider);
+    _planGenerator = ref.watch(planGeneratorClientProvider);
+    _loadConversations();
+    return const WorkoutPlannerState();
+  }
 
   Future<void> _loadConversations() async {
     final db = AppDatabase.instance;
@@ -87,8 +89,8 @@ class WorkoutPlannerNotifier extends StateNotifier<WorkoutPlannerState> {
 
   Future<void> generateResponse(String conversationId) async {
     try {
-      final profile = _ref.read(profileProvider);
-      final locale = _ref.read(localeProvider);
+      final profile = ref.read(profileProvider);
+      final locale = ref.read(localeProvider);
       final languageCode = locale?.languageCode ?? 'sv';
       
       final response = await _client.generateResponse(
@@ -126,8 +128,8 @@ class WorkoutPlannerNotifier extends StateNotifier<WorkoutPlannerState> {
   Future<CustomWorkoutPlan?> generatePlanFromConversation(
     String conversationId,
   ) async {
-    final profile = _ref.read(profileProvider);
-    final locale = _ref.read(localeProvider);
+    final profile = ref.read(profileProvider);
+    final locale = ref.read(localeProvider);
     final languageCode = locale?.languageCode ?? 'sv';
 
     return _planGenerator.generatePlanFromConversation(
@@ -157,8 +159,6 @@ final planGeneratorClientProvider = Provider<PlanGeneratorClient>((ref) {
 });
 
 final workoutPlannerProvider =
-    StateNotifierProvider<WorkoutPlannerNotifier, WorkoutPlannerState>((ref) {
-  final client = ref.watch(workoutPlannerClientProvider);
-  final planGenerator = ref.watch(planGeneratorClientProvider);
-  return WorkoutPlannerNotifier(client, planGenerator, ref);
-});
+    NotifierProvider<WorkoutPlannerNotifier, WorkoutPlannerState>(
+  WorkoutPlannerNotifier.new,
+);

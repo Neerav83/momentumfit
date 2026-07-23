@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../domain/models/custom_workout_plan.dart';
 import '../../providers/custom_plans_provider.dart';
 
 class WorkoutPlansScreen extends ConsumerWidget {
@@ -107,13 +108,13 @@ class WorkoutPlansScreen extends ConsumerWidget {
             Icon(
               Icons.event_note,
               size: 64,
-              color: theme.colorScheme.primary.withOpacity(0.3),
+              color: theme.colorScheme.primary.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(
               'Inga träningsplaner ännu',
               style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
               textAlign: TextAlign.center,
             ),
@@ -121,7 +122,7 @@ class WorkoutPlansScreen extends ConsumerWidget {
             Text(
               'Skapa en plan genom att diskutera med AI-coachen i Träningsplaneraren',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
               textAlign: TextAlign.center,
             ),
@@ -140,7 +141,7 @@ class _PlanCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  final plan;
+  final CustomWorkoutPlan plan;
   final bool isActive;
   final VoidCallback onActivate;
   final VoidCallback onDelete;
@@ -223,15 +224,15 @@ class _PlanCard extends StatelessWidget {
             final info = day.isRestDay
                 ? 'Vilodag'
                 : '${day.exercises.length} övningar';
-            return Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                '$dayName: $info',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.ink.withOpacity(0.8),
+            return               Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  '$dayName: $info',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.ink.withValues(alpha: 0.8),
+                  ),
                 ),
-              ),
-            );
+              );
           }),
           const SizedBox(height: 12),
           SizedBox(
