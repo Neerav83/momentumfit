@@ -19,7 +19,6 @@ class WorkoutPlannerScreen extends ConsumerStatefulWidget {
 }
 
 class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
-  String? _selectedConversationId;
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   bool _isGenerating = false;
@@ -53,9 +52,10 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
     _messageController.clear();
 
     try {
-      String conversationId = _selectedConversationId ?? _uuid.v4();
+      final state = ref.read(workoutPlannerProvider);
+      String conversationId = state.selectedConversationId ?? _uuid.v4();
       
-      if (_selectedConversationId == null) {
+      if (state.selectedConversationId == null) {
         final title = text.length > 50 ? '${text.substring(0, 50)}...' : text;
         final conversation = WorkoutConversation(
           id: conversationId,
@@ -66,7 +66,6 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
         await ref
             .read(workoutPlannerProvider.notifier)
             .createConversation(conversation);
-        setState(() => _selectedConversationId = conversationId);
       }
 
       final userMessage = ChatMessage(
@@ -94,12 +93,10 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
   }
 
   void _selectConversation(String id) {
-    setState(() => _selectedConversationId = id);
     ref.read(workoutPlannerProvider.notifier).loadMessages(id);
   }
 
   void _startNewConversation() {
-    setState(() => _selectedConversationId = null);
     ref.read(workoutPlannerProvider.notifier).clearCurrentMessages();
   }
 
@@ -113,7 +110,7 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
   }
 
   Future<void> _generatePlanFromConversation(WorkoutPlannerState state) async {
-    if (_selectedConversationId == null || state.currentMessages.isEmpty) {
+    if (state.selectedConversationId == null || state.currentMessages.isEmpty) {
       return;
     }
 
@@ -136,7 +133,7 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
 
     final plan = await ref
         .read(workoutPlannerProvider.notifier)
-        .generatePlanFromConversation(_selectedConversationId!);
+        .generatePlanFromConversation(state.selectedConversationId!);
 
     if (!mounted) return;
     Navigator.of(context).pop();
@@ -198,20 +195,31 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
     );
 
     if (shouldActivate != null) {
-      await ref
-          .read(workoutPlannerProvider.notifier)
-          .savePlan(plan.copyWith(isActive: shouldActivate));
+      try {
+        await ref
+            .read(workoutPlannerProvider.notifier)
+            .savePlan(plan.copyWith(isActive: shouldActivate));
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              shouldActivate
-                  ? 'Träningsplan aktiverad!'
-                  : 'Träningsplan sparad',
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                shouldActivate
+                    ? 'Träningsplan aktiverad!'
+                    : 'Träningsplan sparad',
+              ),
             ),
-          ),
-        );
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Fel vid sparande av träningsplan: $e'),
+              backgroundColor: theme.colorScheme.error,
+            ),
+          );
+        }
       }
     }
   }
@@ -238,8 +246,9 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
   }
 
   Future<void> _deleteConversation(String id) async {
+    final state = ref.read(workoutPlannerProvider);
     await ref.read(workoutPlannerProvider.notifier).deleteConversation(id);
-    if (id == _selectedConversationId) {
+    if (id == state.selectedConversationId) {
       _startNewConversation();
     }
   }
@@ -253,18 +262,18 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _selectedConversationId == null
+          state.selectedConversationId == null
               ? 'Ny träningsplan'
-              : _getConversationTitle(state.conversations, _selectedConversationId) ?? 'Träningsplan',
+              : _getConversationTitle(state.conversations, state.selectedConversationId) ?? 'Träningsplan',
         ),
         actions: [
-          if (_selectedConversationId != null && state.currentMessages.length >= 4)
+          if (state.selectedConversationId != null && state.currentMessages.length >= 4)
             IconButton(
               icon: const Icon(Icons.save_alt),
               onPressed: () => _generatePlanFromConversation(state),
               tooltip: 'Skapa träningsplan',
             ),
-          if (_selectedConversationId != null)
+          if (state.selectedConversationId != null)
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: _startNewConversation,
@@ -292,7 +301,7 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
   }
 
   Widget _buildNarrowLayout(WorkoutPlannerState state, ThemeData theme) {
-    if (_selectedConversationId == null && state.currentMessages.isEmpty) {
+    if (state.selectedConversationId == null && state.currentMessages.isEmpty) {
       return Column(
         children: [
           Expanded(child: _buildConversationsList(state, theme)),
@@ -344,7 +353,7 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
         final conversation = state.conversations[index];
         return ConversationListItem(
           conversation: conversation,
-          isSelected: conversation.id == _selectedConversationId,
+          isSelected: conversation.id == state.selectedConversationId,
           onTap: () => _selectConversation(conversation.id),
           onDelete: () => _deleteConversation(conversation.id),
         );
@@ -369,7 +378,7 @@ class _WorkoutPlannerScreenState extends ConsumerState<WorkoutPlannerScreen> {
                       return ChatBubble(
                         message: ChatMessage(
                           id: 'temp',
-                          conversationId: _selectedConversationId ?? '',
+                          conversationId: state.selectedConversationId ?? '',
                           role: MessageRole.assistant,
                           content: '...',
                           timestamp: DateTime.now(),

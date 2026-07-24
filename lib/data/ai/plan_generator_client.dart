@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/config/coach_config.dart';
@@ -51,7 +52,9 @@ class PlanGeneratorClient {
         conversationId,
         conversationHistory,
       );
-    } catch (_) {
+    } catch (e, stackTrace) {
+      debugPrint('Error generating plan from conversation: $e');
+      debugPrint('Stack trace: $stackTrace');
       return null;
     }
   }
@@ -205,6 +208,8 @@ Create a realistic program based on the conversation.''';
     List<ChatMessage> history,
   ) {
     try {
+      debugPrint('Attempting to parse plan from JSON response...');
+      
       String cleanJson = jsonString.trim();
       if (cleanJson.startsWith('```json')) {
         cleanJson = cleanJson.substring(7);
@@ -217,7 +222,15 @@ Create a realistic program based on the conversation.''';
       }
       cleanJson = cleanJson.trim();
 
+      debugPrint('Cleaned JSON: ${cleanJson.substring(0, cleanJson.length > 200 ? 200 : cleanJson.length)}...');
+
       final json = jsonDecode(cleanJson) as Map<String, dynamic>;
+      
+      if (!json.containsKey('name') || !json.containsKey('weeklySchedule')) {
+        debugPrint('Error: Missing required fields in JSON response');
+        debugPrint('Available keys: ${json.keys.join(", ")}');
+        return null;
+      }
       
       final name = json['name'] as String;
       final description = json['description'] as String?;
@@ -226,6 +239,8 @@ Create a realistic program based on the conversation.''';
       final schedule = scheduleJson
           .map((e) => DayWorkout.fromJson(e as Map<String, dynamic>))
           .toList();
+
+      debugPrint('Successfully parsed plan: $name with ${schedule.length} days');
 
       return CustomWorkoutPlan(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -236,7 +251,10 @@ Create a realistic program based on the conversation.''';
         conversationId: conversationId,
         isActive: false,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('Error parsing plan JSON: $e');
+      debugPrint('Stack trace: $stackTrace');
+      debugPrint('Original JSON response: $jsonString');
       return null;
     }
   }
@@ -245,67 +263,106 @@ Create a realistic program based on the conversation.''';
     required String systemPrompt,
     required String userPrompt,
   }) async {
-    final uri = Uri.parse(CoachConfig.proxyUrl);
-    final response = await _http
-        .post(
-          uri,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'model': 'llama-3.1-70b-versatile',
-            'messages': [
-              {'role': 'system', 'content': systemPrompt},
-              {'role': 'user', 'content': userPrompt},
-            ],
-            'temperature': 0.3,
-            'max_tokens': 2000,
-          }),
-        )
-        .timeout(const Duration(seconds: 45));
+    try {
+      final uri = Uri.parse(CoachConfig.proxyUrl);
+      debugPrint('Sending plan generation request to proxy...');
+      
+      final response = await _http
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'model': 'llama-3.1-70b-versatile',
+              'messages': [
+                {'role': 'system', 'content': systemPrompt},
+                {'role': 'user', 'content': userPrompt},
+              ],
+              'temperature': 0.3,
+              'max_tokens': 2000,
+            }),
+          )
+          .timeout(const Duration(seconds: 45));
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        debugPrint('Proxy request failed with status: ${response.statusCode}');
+        debugPrint('Response body: ${response.body}');
+        return null;
+      }
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final text = (body['text'] as String?)?.trim();
+      
+      if (text == null || text.isEmpty) {
+        debugPrint('Error: Empty response from proxy');
+        debugPrint('Response body: ${response.body}');
+        return null;
+      }
+      
+      return text;
+    } catch (e, stackTrace) {
+      debugPrint('Error in proxy request: $e');
+      debugPrint('Stack trace: $stackTrace');
       return null;
     }
-
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    return (body['text'] as String?)?.trim();
   }
 
   Future<String?> _postGroqDirect({
     required String systemPrompt,
     required String userPrompt,
   }) async {
-    final uri = Uri.parse('https://api.groq.com/openai/v1/chat/completions');
-    final response = await _http
-        .post(
-          uri,
-          headers: {
-            'Authorization': 'Bearer ${CoachConfig.apiKey}',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode({
-            'model': 'llama-3.1-70b-versatile',
-            'temperature': 0.3,
-            'max_tokens': 2000,
-            'messages': [
-              {'role': 'system', 'content': systemPrompt},
-              {'role': 'user', 'content': userPrompt},
-            ],
-          }),
-        )
-        .timeout(const Duration(seconds: 45));
+    try {
+      final uri = Uri.parse('https://api.groq.com/openai/v1/chat/completions');
+      debugPrint('Sending plan generation request to Groq API...');
+      
+      final response = await _http
+          .post(
+            uri,
+            headers: {
+              'Authorization': 'Bearer ${CoachConfig.apiKey}',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'model': 'llama-3.1-70b-versatile',
+              'temperature': 0.3,
+              'max_tokens': 2000,
+              'messages': [
+                {'role': 'system', 'content': systemPrompt},
+                {'role': 'user', 'content': userPrompt},
+              ],
+            }),
+          )
+          .timeout(const Duration(seconds: 45));
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        debugPrint('Groq API request failed with status: ${response.statusCode}');
+        debugPrint('Response body: ${response.body}');
+        return null;
+      }
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final choices = body['choices'] as List<dynamic>?;
+      
+      if (choices == null || choices.isEmpty) {
+        debugPrint('Error: No choices in Groq API response');
+        debugPrint('Response body: ${response.body}');
+        return null;
+      }
+
+      final message = choices.first as Map<String, dynamic>;
+      final content =
+          (message['message'] as Map<String, dynamic>?)?['content'] as String?;
+      
+      if (content == null || content.trim().isEmpty) {
+        debugPrint('Error: Empty content in Groq API response');
+        return null;
+      }
+      
+      return content.trim();
+    } catch (e, stackTrace) {
+      debugPrint('Error in Groq API request: $e');
+      debugPrint('Stack trace: $stackTrace');
       return null;
     }
-
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    final choices = body['choices'] as List<dynamic>?;
-    if (choices == null || choices.isEmpty) return null;
-
-    final message = choices.first as Map<String, dynamic>;
-    final content =
-        (message['message'] as Map<String, dynamic>?)?['content'] as String?;
-    return content?.trim();
   }
 
   void dispose() => _http.close();
