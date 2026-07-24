@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -16,21 +17,27 @@ class WorkoutPlannerState {
   const WorkoutPlannerState({
     this.conversations = const [],
     this.currentMessages = const [],
+    this.selectedConversationId,
     this.isLoading = false,
   });
 
   final List<WorkoutConversation> conversations;
   final List<ChatMessage> currentMessages;
+  final String? selectedConversationId;
   final bool isLoading;
 
   WorkoutPlannerState copyWith({
     List<WorkoutConversation>? conversations,
     List<ChatMessage>? currentMessages,
+    String? Function()? selectedConversationId,
     bool? isLoading,
   }) {
     return WorkoutPlannerState(
       conversations: conversations ?? this.conversations,
       currentMessages: currentMessages ?? this.currentMessages,
+      selectedConversationId: selectedConversationId != null 
+          ? selectedConversationId() 
+          : this.selectedConversationId,
       isLoading: isLoading ?? this.isLoading,
     );
   }
@@ -58,16 +65,23 @@ class WorkoutPlannerNotifier extends Notifier<WorkoutPlannerState> {
     final db = AppDatabase.instance;
     await db.saveConversation(conversation);
     await _loadConversations();
+    state = state.copyWith(selectedConversationId: () => conversation.id);
   }
 
   Future<void> loadMessages(String conversationId) async {
     final db = AppDatabase.instance;
     final messages = await db.getMessages(conversationId);
-    state = state.copyWith(currentMessages: messages);
+    state = state.copyWith(
+      currentMessages: messages,
+      selectedConversationId: () => conversationId,
+    );
   }
 
   void clearCurrentMessages() {
-    state = state.copyWith(currentMessages: []);
+    state = state.copyWith(
+      currentMessages: [],
+      selectedConversationId: () => null,
+    );
   }
 
   Future<void> addMessage(ChatMessage message) async {
@@ -128,21 +142,45 @@ class WorkoutPlannerNotifier extends Notifier<WorkoutPlannerState> {
   Future<CustomWorkoutPlan?> generatePlanFromConversation(
     String conversationId,
   ) async {
-    final profile = ref.read(profileProvider);
-    final locale = ref.read(localeProvider);
-    final languageCode = locale?.languageCode ?? 'sv';
+    try {
+      debugPrint('Starting plan generation for conversation: $conversationId');
+      
+      final profile = ref.read(profileProvider);
+      final locale = ref.read(localeProvider);
+      final languageCode = locale?.languageCode ?? 'sv';
 
-    return _planGenerator.generatePlanFromConversation(
-      conversationId: conversationId,
-      conversationHistory: state.currentMessages,
-      userProfile: profile,
-      languageCode: languageCode,
-    );
+      final plan = await _planGenerator.generatePlanFromConversation(
+        conversationId: conversationId,
+        conversationHistory: state.currentMessages,
+        userProfile: profile,
+        languageCode: languageCode,
+      );
+      
+      if (plan == null) {
+        debugPrint('Plan generation returned null');
+      } else {
+        debugPrint('Plan generated successfully: ${plan.name}');
+      }
+      
+      return plan;
+    } catch (e, stackTrace) {
+      debugPrint('Error generating plan: $e');
+      debugPrint('Stack trace: $stackTrace');
+      return null;
+    }
   }
 
   Future<void> savePlan(CustomWorkoutPlan plan) async {
-    final db = AppDatabase.instance;
-    await db.saveCustomPlan(plan);
+    try {
+      debugPrint('Saving custom plan: ${plan.name}');
+      final db = AppDatabase.instance;
+      await db.saveCustomPlan(plan);
+      debugPrint('Custom plan saved successfully');
+    } catch (e, stackTrace) {
+      debugPrint('Error saving plan: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
   }
 }
 
